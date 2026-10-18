@@ -1,0 +1,62 @@
+[project]
+name = "ai-reliability-lab-backend"
+version = "0.1.0"
+description = "Backend API for AI Reliability Lab, an AI agent reliability testing platform."
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "fastapi>=0.146.0,<0.147",
+    "pydantic-settings>=2.16.0,<3",
+    "uvicorn[standard]>=0.54.0,<0.55",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1,<0.29",
+    "mypy>=2.4.0,<3",
+    "pytest>=9.1.1,<10",
+    "ruff>=0.17.1,<0.18",
+]
+
+[build-system]
+requires = ["hatchling>=1.32,<2"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/app"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+    "N",   # pep8-naming
+    "SIM", # flake8-simplify
+    "RUF", # ruff-specific rules
+    "BLE", # blind except
+    "ANN", # missing type annotations
+]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+plugins = ["pydantic.mypy"]
+files = ["src", "tests"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers --strict-config"
+filterwarnings = [
+    "error",
+    # Starlette 1.9 prefers `httpx2` for TestClient and warns when it falls back to `httpx`.
+    # Kept on `httpx` until the switch is reviewed; see docs/engineering/01-repository-foundation.md.
+    "ignore:Using `httpx` with `starlette.testclient` is deprecated:starlette.exceptions.StarletteDeprecationWarning",
+]
