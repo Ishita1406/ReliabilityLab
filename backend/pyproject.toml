@@ -13,9 +13,11 @@ dependencies = [
 [dependency-groups]
 dev = [
     "httpx>=0.28.1,<0.29",
+    "jsonschema>=4.26.0,<5",
     "mypy>=2.4.0,<3",
     "pytest>=9.1.1,<10",
     "ruff>=0.17.1,<0.18",
+    "types-jsonschema>=4.26.0,<5",
 ]
 
 [build-system]

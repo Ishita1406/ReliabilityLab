@@ -1,0 +1,669 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "AgentOutcome": {
+      "description": "Terminal outcome an agent declares in its final answer.\n\nAgents under test must report one of these alongside their answer so that expected\nbehaviour (answer vs. abstain vs. report failure) can be scored deterministically.",
+      "enum": [
+        "answered",
+        "insufficient_information",
+        "task_failed",
+        "refused"
+      ],
+      "title": "AgentOutcome",
+      "type": "string"
+    },
+    "AnswerContainsCriterion": {
+      "additionalProperties": false,
+      "description": "The final answer contains the given strings (all of them, or any one of them).",
+      "properties": {
+        "id": {
+          "description": "Identifier unique within its expectation.",
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "weight": {
+          "default": 1.0,
+          "description": "Relative weight in the score.",
+          "exclusiveMinimum": 0.0,
+          "title": "Weight",
+          "type": "number"
+        },
+        "required": {
+          "default": false,
+          "description": "If true, the run fails when this criterion fails.",
+          "title": "Required",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "answer_contains",
+          "title": "Type",
+          "type": "string"
+        },
+        "values": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Values",
+          "type": "array"
+        },
+        "match": {
+          "$ref": "#/$defs/MatchMode",
+          "default": "all"
+        },
+        "case_sensitive": {
+          "default": false,
+          "title": "Case Sensitive",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "description",
+        "type",
+        "values"
+      ],
+      "title": "AnswerContainsCriterion",
+      "type": "object"
+    },
+    "AnswerExcludesCriterion": {
+      "additionalProperties": false,
+      "description": "The final answer contains none of the given strings.",
+      "properties": {
+        "id": {
+          "description": "Identifier unique within its expectation.",
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "weight": {
+          "default": 1.0,
+          "description": "Relative weight in the score.",
+          "exclusiveMinimum": 0.0,
+          "title": "Weight",
+          "type": "number"
+        },
+        "required": {
+          "default": false,
+          "description": "If true, the run fails when this criterion fails.",
+          "title": "Required",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "answer_excludes",
+          "title": "Type",
+          "type": "string"
+        },
+        "values": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Values",
+          "type": "array"
+        },
+        "case_sensitive": {
+          "default": false,
+          "title": "Case Sensitive",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "description",
+        "type",
+        "values"
+      ],
+      "title": "AnswerExcludesCriterion",
+      "type": "object"
+    },
+    "AnswerMatchesRegexCriterion": {
+      "additionalProperties": false,
+      "description": "The final answer matches a Python regular expression (``re.search`` semantics).",
+      "properties": {
+        "id": {
+          "description": "Identifier unique within its expectation.",
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "weight": {
+          "default": 1.0,
+          "description": "Relative weight in the score.",
+          "exclusiveMinimum": 0.0,
+          "title": "Weight",
+          "type": "number"
+        },
+        "required": {
+          "default": false,
+          "description": "If true, the run fails when this criterion fails.",
+          "title": "Required",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "answer_matches_regex",
+          "title": "Type",
+          "type": "string"
+        },
+        "pattern": {
+          "minLength": 1,
+          "title": "Pattern",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "description",
+        "type",
+        "pattern"
+      ],
+      "title": "AnswerMatchesRegexCriterion",
+      "type": "object"
+    },
+    "CaseMetadata": {
+      "additionalProperties": false,
+      "properties": {
+        "synthetic": {
+          "description": "True if the case content was invented for testing.",
+          "title": "Synthetic",
+          "type": "boolean"
+        },
+        "provenance": {
+          "description": "Where the case content came from.",
+          "minLength": 1,
+          "title": "Provenance",
+          "type": "string"
+        },
+        "notes": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Notes"
+        }
+      },
+      "required": [
+        "synthetic",
+        "provenance"
+      ],
+      "title": "CaseMetadata",
+      "type": "object"
+    },
+    "CitationsWithinCriterion": {
+      "additionalProperties": false,
+      "description": "Every ``[source:<id>]`` citation in the answer refers to an allowed source document,\nand at least ``min_citations`` citations are present.",
+      "properties": {
+        "id": {
+          "description": "Identifier unique within its expectation.",
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "weight": {
+          "default": 1.0,
+          "description": "Relative weight in the score.",
+          "exclusiveMinimum": 0.0,
+          "title": "Weight",
+          "type": "number"
+        },
+        "required": {
+          "default": false,
+          "description": "If true, the run fails when this criterion fails.",
+          "title": "Required",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "citations_within",
+          "title": "Type",
+          "type": "string"
+        },
+        "allowed_source_ids": {
+          "items": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Allowed Source Ids",
+          "type": "array"
+        },
+        "min_citations": {
+          "default": 1,
+          "minimum": 0,
+          "title": "Min Citations",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "description",
+        "type",
+        "allowed_source_ids"
+      ],
+      "title": "CitationsWithinCriterion",
+      "type": "object"
+    },
+    "DeclaredOutcomeCriterion": {
+      "additionalProperties": false,
+      "description": "The agent declared this terminal outcome in its final answer.",
+      "properties": {
+        "id": {
+          "description": "Identifier unique within its expectation.",
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "weight": {
+          "default": 1.0,
+          "description": "Relative weight in the score.",
+          "exclusiveMinimum": 0.0,
+          "title": "Weight",
+          "type": "number"
+        },
+        "required": {
+          "default": false,
+          "description": "If true, the run fails when this criterion fails.",
+          "title": "Required",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "declared_outcome",
+          "title": "Type",
+          "type": "string"
+        },
+        "expected": {
+          "$ref": "#/$defs/AgentOutcome"
+        }
+      },
+      "required": [
+        "id",
+        "description",
+        "type",
+        "expected"
+      ],
+      "title": "DeclaredOutcomeCriterion",
+      "type": "object"
+    },
+    "Difficulty": {
+      "enum": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "title": "Difficulty",
+      "type": "string"
+    },
+    "Expectation": {
+      "additionalProperties": false,
+      "properties": {
+        "expected_behavior": {
+          "$ref": "#/$defs/ExpectedOutcome"
+        },
+        "evaluation_criteria": {
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "answer_contains": "#/$defs/AnswerContainsCriterion",
+                "answer_excludes": "#/$defs/AnswerExcludesCriterion",
+                "answer_matches_regex": "#/$defs/AnswerMatchesRegexCriterion",
+                "citations_within": "#/$defs/CitationsWithinCriterion",
+                "declared_outcome": "#/$defs/DeclaredOutcomeCriterion",
+                "tool_call_count": "#/$defs/ToolCallCountCriterion"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/AnswerContainsCriterion"
+              },
+              {
+                "$ref": "#/$defs/AnswerExcludesCriterion"
+              },
+              {
+                "$ref": "#/$defs/AnswerMatchesRegexCriterion"
+              },
+              {
+                "$ref": "#/$defs/DeclaredOutcomeCriterion"
+              },
+              {
+                "$ref": "#/$defs/ToolCallCountCriterion"
+              },
+              {
+                "$ref": "#/$defs/CitationsWithinCriterion"
+              }
+            ]
+          },
+          "minItems": 1,
+          "title": "Evaluation Criteria",
+          "type": "array"
+        },
+        "scoring": {
+          "$ref": "#/$defs/ScoringPolicy"
+        }
+      },
+      "required": [
+        "expected_behavior",
+        "evaluation_criteria"
+      ],
+      "title": "Expectation",
+      "type": "object"
+    },
+    "ExpectedOutcome": {
+      "additionalProperties": false,
+      "description": "The behaviour a correct agent exhibits.",
+      "properties": {
+        "outcome": {
+          "$ref": "#/$defs/AgentOutcome"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "reference_answer": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Canonical answer; only meaningful when outcome is 'answered'.",
+          "title": "Reference Answer"
+        }
+      },
+      "required": [
+        "outcome",
+        "description"
+      ],
+      "title": "ExpectedOutcome",
+      "type": "object"
+    },
+    "MatchMode": {
+      "enum": [
+        "all",
+        "any"
+      ],
+      "title": "MatchMode",
+      "type": "string"
+    },
+    "ScoringPolicy": {
+      "additionalProperties": false,
+      "description": "Score = sum(weight of passed criteria) / sum(all weights). A run passes when every\nrequired criterion passes and the score is at least ``pass_threshold``.",
+      "properties": {
+        "pass_threshold": {
+          "default": 1.0,
+          "exclusiveMinimum": 0.0,
+          "maximum": 1.0,
+          "title": "Pass Threshold",
+          "type": "number"
+        }
+      },
+      "title": "ScoringPolicy",
+      "type": "object"
+    },
+    "SourceDocument": {
+      "additionalProperties": false,
+      "description": "A document provided to the agent as part of the task.",
+      "properties": {
+        "id": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "content": {
+          "minLength": 1,
+          "title": "Content",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "content"
+      ],
+      "title": "SourceDocument",
+      "type": "object"
+    },
+    "TaskInputs": {
+      "additionalProperties": false,
+      "properties": {
+        "prompt": {
+          "description": "The instruction given to the agent.",
+          "minLength": 1,
+          "title": "Prompt",
+          "type": "string"
+        },
+        "documents": {
+          "items": {
+            "$ref": "#/$defs/SourceDocument"
+          },
+          "title": "Documents",
+          "type": "array"
+        },
+        "available_tools": {
+          "items": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "type": "string"
+          },
+          "title": "Available Tools",
+          "type": "array"
+        },
+        "variables": {
+          "description": "Named scalar parameters referenced by the prompt.",
+          "patternProperties": {
+            "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            }
+          },
+          "propertyNames": {
+            "maxLength": 100,
+            "minLength": 1
+          },
+          "title": "Variables",
+          "type": "object"
+        }
+      },
+      "required": [
+        "prompt"
+      ],
+      "title": "TaskInputs",
+      "type": "object"
+    },
+    "ToolCallCountCriterion": {
+      "additionalProperties": false,
+      "description": "The named tool was called between ``min_calls`` and ``max_calls`` times (inclusive).",
+      "properties": {
+        "id": {
+          "description": "Identifier unique within its expectation.",
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "weight": {
+          "default": 1.0,
+          "description": "Relative weight in the score.",
+          "exclusiveMinimum": 0.0,
+          "title": "Weight",
+          "type": "number"
+        },
+        "required": {
+          "default": false,
+          "description": "If true, the run fails when this criterion fails.",
+          "title": "Required",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "tool_call_count",
+          "title": "Type",
+          "type": "string"
+        },
+        "tool_name": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Tool Name",
+          "type": "string"
+        },
+        "min_calls": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Min Calls",
+          "type": "integer"
+        },
+        "max_calls": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Calls"
+        }
+      },
+      "required": [
+        "id",
+        "description",
+        "type",
+        "tool_name"
+      ],
+      "title": "ToolCallCountCriterion",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "maxLength": 100,
+      "minLength": 1,
+      "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+      "title": "Id",
+      "type": "string"
+    },
+    "title": {
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+    },
+    "task_description": {
+      "description": "What the case tests, for humans.",
+      "minLength": 1,
+      "title": "Task Description",
+      "type": "string"
+    },
+    "inputs": {
+      "$ref": "#/$defs/TaskInputs"
+    },
+    "expectation": {
+      "$ref": "#/$defs/Expectation"
+    },
+    "tags": {
+      "items": {
+        "maxLength": 100,
+        "minLength": 1,
+        "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+        "type": "string"
+      },
+      "title": "Tags",
+      "type": "array"
+    },
+    "difficulty": {
+      "$ref": "#/$defs/Difficulty"
+    },
+    "metadata": {
+      "$ref": "#/$defs/CaseMetadata"
+    }
+  },
+  "required": [
+    "id",
+    "title",
+    "task_description",
+    "inputs",
+    "expectation",
+    "difficulty",
+    "metadata"
+  ],
+  "title": "BenchmarkCase",
+  "type": "object"
+}

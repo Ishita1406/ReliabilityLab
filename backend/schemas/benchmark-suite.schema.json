@@ -1,0 +1,1366 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "AgentOutcome": {
+      "description": "Terminal outcome an agent declares in its final answer.\n\nAgents under test must report one of these alongside their answer so that expected\nbehaviour (answer vs. abstain vs. report failure) can be scored deterministically.",
+      "enum": [
+        "answered",
+        "insufficient_information",
+        "task_failed",
+        "refused"
+      ],
+      "title": "AgentOutcome",
+      "type": "string"
+    },
+    "AnswerContainsCriterion": {
+      "additionalProperties": false,
+      "description": "The final answer contains the given strings (all of them, or any one of them).",
+      "properties": {
+        "id": {
+          "description": "Identifier unique within its expectation.",
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "weight": {
+          "default": 1.0,
+          "description": "Relative weight in the score.",
+          "exclusiveMinimum": 0.0,
+          "title": "Weight",
+          "type": "number"
+        },
+        "required": {
+          "default": false,
+          "description": "If true, the run fails when this criterion fails.",
+          "title": "Required",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "answer_contains",
+          "title": "Type",
+          "type": "string"
+        },
+        "values": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Values",
+          "type": "array"
+        },
+        "match": {
+          "$ref": "#/$defs/MatchMode",
+          "default": "all"
+        },
+        "case_sensitive": {
+          "default": false,
+          "title": "Case Sensitive",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "description",
+        "type",
+        "values"
+      ],
+      "title": "AnswerContainsCriterion",
+      "type": "object"
+    },
+    "AnswerExcludesCriterion": {
+      "additionalProperties": false,
+      "description": "The final answer contains none of the given strings.",
+      "properties": {
+        "id": {
+          "description": "Identifier unique within its expectation.",
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "weight": {
+          "default": 1.0,
+          "description": "Relative weight in the score.",
+          "exclusiveMinimum": 0.0,
+          "title": "Weight",
+          "type": "number"
+        },
+        "required": {
+          "default": false,
+          "description": "If true, the run fails when this criterion fails.",
+          "title": "Required",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "answer_excludes",
+          "title": "Type",
+          "type": "string"
+        },
+        "values": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Values",
+          "type": "array"
+        },
+        "case_sensitive": {
+          "default": false,
+          "title": "Case Sensitive",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "description",
+        "type",
+        "values"
+      ],
+      "title": "AnswerExcludesCriterion",
+      "type": "object"
+    },
+    "AnswerMatchesRegexCriterion": {
+      "additionalProperties": false,
+      "description": "The final answer matches a Python regular expression (``re.search`` semantics).",
+      "properties": {
+        "id": {
+          "description": "Identifier unique within its expectation.",
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "weight": {
+          "default": 1.0,
+          "description": "Relative weight in the score.",
+          "exclusiveMinimum": 0.0,
+          "title": "Weight",
+          "type": "number"
+        },
+        "required": {
+          "default": false,
+          "description": "If true, the run fails when this criterion fails.",
+          "title": "Required",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "answer_matches_regex",
+          "title": "Type",
+          "type": "string"
+        },
+        "pattern": {
+          "minLength": 1,
+          "title": "Pattern",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "description",
+        "type",
+        "pattern"
+      ],
+      "title": "AnswerMatchesRegexCriterion",
+      "type": "object"
+    },
+    "BenchmarkCase": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "task_description": {
+          "description": "What the case tests, for humans.",
+          "minLength": 1,
+          "title": "Task Description",
+          "type": "string"
+        },
+        "inputs": {
+          "$ref": "#/$defs/TaskInputs"
+        },
+        "expectation": {
+          "$ref": "#/$defs/Expectation"
+        },
+        "tags": {
+          "items": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "type": "string"
+          },
+          "title": "Tags",
+          "type": "array"
+        },
+        "difficulty": {
+          "$ref": "#/$defs/Difficulty"
+        },
+        "metadata": {
+          "$ref": "#/$defs/CaseMetadata"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "task_description",
+        "inputs",
+        "expectation",
+        "difficulty",
+        "metadata"
+      ],
+      "title": "BenchmarkCase",
+      "type": "object"
+    },
+    "CaseMetadata": {
+      "additionalProperties": false,
+      "properties": {
+        "synthetic": {
+          "description": "True if the case content was invented for testing.",
+          "title": "Synthetic",
+          "type": "boolean"
+        },
+        "provenance": {
+          "description": "Where the case content came from.",
+          "minLength": 1,
+          "title": "Provenance",
+          "type": "string"
+        },
+        "notes": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Notes"
+        }
+      },
+      "required": [
+        "synthetic",
+        "provenance"
+      ],
+      "title": "CaseMetadata",
+      "type": "object"
+    },
+    "CitationsWithinCriterion": {
+      "additionalProperties": false,
+      "description": "Every ``[source:<id>]`` citation in the answer refers to an allowed source document,\nand at least ``min_citations`` citations are present.",
+      "properties": {
+        "id": {
+          "description": "Identifier unique within its expectation.",
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "weight": {
+          "default": 1.0,
+          "description": "Relative weight in the score.",
+          "exclusiveMinimum": 0.0,
+          "title": "Weight",
+          "type": "number"
+        },
+        "required": {
+          "default": false,
+          "description": "If true, the run fails when this criterion fails.",
+          "title": "Required",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "citations_within",
+          "title": "Type",
+          "type": "string"
+        },
+        "allowed_source_ids": {
+          "items": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Allowed Source Ids",
+          "type": "array"
+        },
+        "min_citations": {
+          "default": 1,
+          "minimum": 0,
+          "title": "Min Citations",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "description",
+        "type",
+        "allowed_source_ids"
+      ],
+      "title": "CitationsWithinCriterion",
+      "type": "object"
+    },
+    "DeclaredOutcomeCriterion": {
+      "additionalProperties": false,
+      "description": "The agent declared this terminal outcome in its final answer.",
+      "properties": {
+        "id": {
+          "description": "Identifier unique within its expectation.",
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "weight": {
+          "default": 1.0,
+          "description": "Relative weight in the score.",
+          "exclusiveMinimum": 0.0,
+          "title": "Weight",
+          "type": "number"
+        },
+        "required": {
+          "default": false,
+          "description": "If true, the run fails when this criterion fails.",
+          "title": "Required",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "declared_outcome",
+          "title": "Type",
+          "type": "string"
+        },
+        "expected": {
+          "$ref": "#/$defs/AgentOutcome"
+        }
+      },
+      "required": [
+        "id",
+        "description",
+        "type",
+        "expected"
+      ],
+      "title": "DeclaredOutcomeCriterion",
+      "type": "object"
+    },
+    "Difficulty": {
+      "enum": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "title": "Difficulty",
+      "type": "string"
+    },
+    "EmptyResultFault": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "description": "Identifier unique within its scenario.",
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "target_tool": {
+          "description": "Name of the tool whose calls are affected.",
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Target Tool",
+          "type": "string"
+        },
+        "apply_on_calls": {
+          "anyOf": [
+            {
+              "items": {
+                "exclusiveMinimum": 0,
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "1-based call numbers of the target tool to affect; null means every call.",
+          "title": "Apply On Calls"
+        },
+        "probability": {
+          "default": 1.0,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Probability",
+          "type": "number"
+        },
+        "type": {
+          "const": "empty_result",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "target_tool",
+        "type"
+      ],
+      "title": "EmptyResultFault",
+      "type": "object"
+    },
+    "Expectation": {
+      "additionalProperties": false,
+      "properties": {
+        "expected_behavior": {
+          "$ref": "#/$defs/ExpectedOutcome"
+        },
+        "evaluation_criteria": {
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "answer_contains": "#/$defs/AnswerContainsCriterion",
+                "answer_excludes": "#/$defs/AnswerExcludesCriterion",
+                "answer_matches_regex": "#/$defs/AnswerMatchesRegexCriterion",
+                "citations_within": "#/$defs/CitationsWithinCriterion",
+                "declared_outcome": "#/$defs/DeclaredOutcomeCriterion",
+                "tool_call_count": "#/$defs/ToolCallCountCriterion"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/AnswerContainsCriterion"
+              },
+              {
+                "$ref": "#/$defs/AnswerExcludesCriterion"
+              },
+              {
+                "$ref": "#/$defs/AnswerMatchesRegexCriterion"
+              },
+              {
+                "$ref": "#/$defs/DeclaredOutcomeCriterion"
+              },
+              {
+                "$ref": "#/$defs/ToolCallCountCriterion"
+              },
+              {
+                "$ref": "#/$defs/CitationsWithinCriterion"
+              }
+            ]
+          },
+          "minItems": 1,
+          "title": "Evaluation Criteria",
+          "type": "array"
+        },
+        "scoring": {
+          "$ref": "#/$defs/ScoringPolicy"
+        }
+      },
+      "required": [
+        "expected_behavior",
+        "evaluation_criteria"
+      ],
+      "title": "Expectation",
+      "type": "object"
+    },
+    "ExpectedOutcome": {
+      "additionalProperties": false,
+      "description": "The behaviour a correct agent exhibits.",
+      "properties": {
+        "outcome": {
+          "$ref": "#/$defs/AgentOutcome"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "reference_answer": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Canonical answer; only meaningful when outcome is 'answered'.",
+          "title": "Reference Answer"
+        }
+      },
+      "required": [
+        "outcome",
+        "description"
+      ],
+      "title": "ExpectedOutcome",
+      "type": "object"
+    },
+    "IncorrectOutputFault": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "description": "Identifier unique within its scenario.",
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "target_tool": {
+          "description": "Name of the tool whose calls are affected.",
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Target Tool",
+          "type": "string"
+        },
+        "apply_on_calls": {
+          "anyOf": [
+            {
+              "items": {
+                "exclusiveMinimum": 0,
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "1-based call numbers of the target tool to affect; null means every call.",
+          "title": "Apply On Calls"
+        },
+        "probability": {
+          "default": 1.0,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Probability",
+          "type": "number"
+        },
+        "type": {
+          "const": "incorrect_output",
+          "title": "Type",
+          "type": "string"
+        },
+        "replacement_output": {
+          "description": "Plausible but wrong content returned instead of the real result.",
+          "minLength": 1,
+          "title": "Replacement Output",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "target_tool",
+        "type",
+        "replacement_output"
+      ],
+      "title": "IncorrectOutputFault",
+      "type": "object"
+    },
+    "LatencyFault": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "description": "Identifier unique within its scenario.",
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "target_tool": {
+          "description": "Name of the tool whose calls are affected.",
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Target Tool",
+          "type": "string"
+        },
+        "apply_on_calls": {
+          "anyOf": [
+            {
+              "items": {
+                "exclusiveMinimum": 0,
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "1-based call numbers of the target tool to affect; null means every call.",
+          "title": "Apply On Calls"
+        },
+        "probability": {
+          "default": 1.0,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Probability",
+          "type": "number"
+        },
+        "type": {
+          "const": "latency",
+          "title": "Type",
+          "type": "string"
+        },
+        "delay_ms": {
+          "exclusiveMinimum": 0,
+          "title": "Delay Ms",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "target_tool",
+        "type",
+        "delay_ms"
+      ],
+      "title": "LatencyFault",
+      "type": "object"
+    },
+    "MalformationKind": {
+      "description": "How a ``malformed_output`` fault corrupts a tool response.",
+      "enum": [
+        "truncated",
+        "invalid_json",
+        "wrong_schema"
+      ],
+      "title": "MalformationKind",
+      "type": "string"
+    },
+    "MalformedOutputFault": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "description": "Identifier unique within its scenario.",
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "target_tool": {
+          "description": "Name of the tool whose calls are affected.",
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Target Tool",
+          "type": "string"
+        },
+        "apply_on_calls": {
+          "anyOf": [
+            {
+              "items": {
+                "exclusiveMinimum": 0,
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "1-based call numbers of the target tool to affect; null means every call.",
+          "title": "Apply On Calls"
+        },
+        "probability": {
+          "default": 1.0,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Probability",
+          "type": "number"
+        },
+        "type": {
+          "const": "malformed_output",
+          "title": "Type",
+          "type": "string"
+        },
+        "malformation": {
+          "$ref": "#/$defs/MalformationKind"
+        }
+      },
+      "required": [
+        "id",
+        "target_tool",
+        "type",
+        "malformation"
+      ],
+      "title": "MalformedOutputFault",
+      "type": "object"
+    },
+    "MatchMode": {
+      "enum": [
+        "all",
+        "any"
+      ],
+      "title": "MatchMode",
+      "type": "string"
+    },
+    "PromptInjectionFault": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "description": "Identifier unique within its scenario.",
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "target_tool": {
+          "description": "Name of the tool whose calls are affected.",
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Target Tool",
+          "type": "string"
+        },
+        "apply_on_calls": {
+          "anyOf": [
+            {
+              "items": {
+                "exclusiveMinimum": 0,
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "1-based call numbers of the target tool to affect; null means every call.",
+          "title": "Apply On Calls"
+        },
+        "probability": {
+          "default": 1.0,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Probability",
+          "type": "number"
+        },
+        "type": {
+          "const": "prompt_injection",
+          "title": "Type",
+          "type": "string"
+        },
+        "injected_text": {
+          "description": "Adversarial instructions appended to the tool output.",
+          "minLength": 1,
+          "title": "Injected Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "target_tool",
+        "type",
+        "injected_text"
+      ],
+      "title": "PromptInjectionFault",
+      "type": "object"
+    },
+    "RateLimitFault": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "description": "Identifier unique within its scenario.",
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "target_tool": {
+          "description": "Name of the tool whose calls are affected.",
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Target Tool",
+          "type": "string"
+        },
+        "apply_on_calls": {
+          "anyOf": [
+            {
+              "items": {
+                "exclusiveMinimum": 0,
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "1-based call numbers of the target tool to affect; null means every call.",
+          "title": "Apply On Calls"
+        },
+        "probability": {
+          "default": 1.0,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Probability",
+          "type": "number"
+        },
+        "type": {
+          "const": "rate_limit",
+          "title": "Type",
+          "type": "string"
+        },
+        "retry_after_ms": {
+          "exclusiveMinimum": 0,
+          "title": "Retry After Ms",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "target_tool",
+        "type",
+        "retry_after_ms"
+      ],
+      "title": "RateLimitFault",
+      "type": "object"
+    },
+    "Scenario": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "case_id": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Case Id",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/ScenarioKind"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "faults": {
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "empty_result": "#/$defs/EmptyResultFault",
+                "incorrect_output": "#/$defs/IncorrectOutputFault",
+                "latency": "#/$defs/LatencyFault",
+                "malformed_output": "#/$defs/MalformedOutputFault",
+                "prompt_injection": "#/$defs/PromptInjectionFault",
+                "rate_limit": "#/$defs/RateLimitFault",
+                "tool_error": "#/$defs/ToolErrorFault",
+                "tool_timeout": "#/$defs/ToolTimeoutFault"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ToolTimeoutFault"
+              },
+              {
+                "$ref": "#/$defs/ToolErrorFault"
+              },
+              {
+                "$ref": "#/$defs/MalformedOutputFault"
+              },
+              {
+                "$ref": "#/$defs/EmptyResultFault"
+              },
+              {
+                "$ref": "#/$defs/IncorrectOutputFault"
+              },
+              {
+                "$ref": "#/$defs/LatencyFault"
+              },
+              {
+                "$ref": "#/$defs/RateLimitFault"
+              },
+              {
+                "$ref": "#/$defs/PromptInjectionFault"
+              }
+            ]
+          },
+          "title": "Faults",
+          "type": "array"
+        },
+        "expectation_override": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Expectation"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Replaces the case expectation for this scenario (fault-injected only)."
+        }
+      },
+      "required": [
+        "id",
+        "case_id",
+        "kind",
+        "description"
+      ],
+      "title": "Scenario",
+      "type": "object"
+    },
+    "ScenarioKind": {
+      "description": "Whether a scenario runs the case unmodified or with injected faults.",
+      "enum": [
+        "baseline",
+        "fault_injected"
+      ],
+      "title": "ScenarioKind",
+      "type": "string"
+    },
+    "ScoringPolicy": {
+      "additionalProperties": false,
+      "description": "Score = sum(weight of passed criteria) / sum(all weights). A run passes when every\nrequired criterion passes and the score is at least ``pass_threshold``.",
+      "properties": {
+        "pass_threshold": {
+          "default": 1.0,
+          "exclusiveMinimum": 0.0,
+          "maximum": 1.0,
+          "title": "Pass Threshold",
+          "type": "number"
+        }
+      },
+      "title": "ScoringPolicy",
+      "type": "object"
+    },
+    "SourceDocument": {
+      "additionalProperties": false,
+      "description": "A document provided to the agent as part of the task.",
+      "properties": {
+        "id": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "content": {
+          "minLength": 1,
+          "title": "Content",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "content"
+      ],
+      "title": "SourceDocument",
+      "type": "object"
+    },
+    "TaskInputs": {
+      "additionalProperties": false,
+      "properties": {
+        "prompt": {
+          "description": "The instruction given to the agent.",
+          "minLength": 1,
+          "title": "Prompt",
+          "type": "string"
+        },
+        "documents": {
+          "items": {
+            "$ref": "#/$defs/SourceDocument"
+          },
+          "title": "Documents",
+          "type": "array"
+        },
+        "available_tools": {
+          "items": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "type": "string"
+          },
+          "title": "Available Tools",
+          "type": "array"
+        },
+        "variables": {
+          "description": "Named scalar parameters referenced by the prompt.",
+          "patternProperties": {
+            "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            }
+          },
+          "propertyNames": {
+            "maxLength": 100,
+            "minLength": 1
+          },
+          "title": "Variables",
+          "type": "object"
+        }
+      },
+      "required": [
+        "prompt"
+      ],
+      "title": "TaskInputs",
+      "type": "object"
+    },
+    "ToolCallCountCriterion": {
+      "additionalProperties": false,
+      "description": "The named tool was called between ``min_calls`` and ``max_calls`` times (inclusive).",
+      "properties": {
+        "id": {
+          "description": "Identifier unique within its expectation.",
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "weight": {
+          "default": 1.0,
+          "description": "Relative weight in the score.",
+          "exclusiveMinimum": 0.0,
+          "title": "Weight",
+          "type": "number"
+        },
+        "required": {
+          "default": false,
+          "description": "If true, the run fails when this criterion fails.",
+          "title": "Required",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "tool_call_count",
+          "title": "Type",
+          "type": "string"
+        },
+        "tool_name": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Tool Name",
+          "type": "string"
+        },
+        "min_calls": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Min Calls",
+          "type": "integer"
+        },
+        "max_calls": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Calls"
+        }
+      },
+      "required": [
+        "id",
+        "description",
+        "type",
+        "tool_name"
+      ],
+      "title": "ToolCallCountCriterion",
+      "type": "object"
+    },
+    "ToolErrorFault": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "description": "Identifier unique within its scenario.",
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "target_tool": {
+          "description": "Name of the tool whose calls are affected.",
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Target Tool",
+          "type": "string"
+        },
+        "apply_on_calls": {
+          "anyOf": [
+            {
+              "items": {
+                "exclusiveMinimum": 0,
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "1-based call numbers of the target tool to affect; null means every call.",
+          "title": "Apply On Calls"
+        },
+        "probability": {
+          "default": 1.0,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Probability",
+          "type": "number"
+        },
+        "type": {
+          "const": "tool_error",
+          "title": "Type",
+          "type": "string"
+        },
+        "error_message": {
+          "minLength": 1,
+          "title": "Error Message",
+          "type": "string"
+        },
+        "status_code": {
+          "anyOf": [
+            {
+              "maximum": 599,
+              "minimum": 400,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Status Code"
+        }
+      },
+      "required": [
+        "id",
+        "target_tool",
+        "type",
+        "error_message"
+      ],
+      "title": "ToolErrorFault",
+      "type": "object"
+    },
+    "ToolTimeoutFault": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "description": "Identifier unique within its scenario.",
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "target_tool": {
+          "description": "Name of the tool whose calls are affected.",
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Target Tool",
+          "type": "string"
+        },
+        "apply_on_calls": {
+          "anyOf": [
+            {
+              "items": {
+                "exclusiveMinimum": 0,
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "1-based call numbers of the target tool to affect; null means every call.",
+          "title": "Apply On Calls"
+        },
+        "probability": {
+          "default": 1.0,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Probability",
+          "type": "number"
+        },
+        "type": {
+          "const": "tool_timeout",
+          "title": "Type",
+          "type": "string"
+        },
+        "timeout_ms": {
+          "exclusiveMinimum": 0,
+          "title": "Timeout Ms",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "target_tool",
+        "type",
+        "timeout_ms"
+      ],
+      "title": "ToolTimeoutFault",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "A versioned collection of cases and scenarios; the root of a dataset file.",
+  "properties": {
+    "schema_version": {
+      "const": "1.0",
+      "description": "Dataset file format version.",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "id": {
+      "maxLength": 100,
+      "minLength": 1,
+      "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+      "title": "Id",
+      "type": "string"
+    },
+    "version": {
+      "description": "Content version of this suite.",
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$",
+      "title": "Version",
+      "type": "string"
+    },
+    "name": {
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "description": {
+      "minLength": 1,
+      "title": "Description",
+      "type": "string"
+    },
+    "synthetic": {
+      "description": "True if any case in the suite is synthetic.",
+      "title": "Synthetic",
+      "type": "boolean"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "cases": {
+      "items": {
+        "$ref": "#/$defs/BenchmarkCase"
+      },
+      "minItems": 1,
+      "title": "Cases",
+      "type": "array"
+    },
+    "scenarios": {
+      "items": {
+        "$ref": "#/$defs/Scenario"
+      },
+      "minItems": 1,
+      "title": "Scenarios",
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema_version",
+    "id",
+    "version",
+    "name",
+    "description",
+    "synthetic",
+    "created_at",
+    "cases",
+    "scenarios"
+  ],
+  "title": "BenchmarkSuite",
+  "type": "object"
+}
