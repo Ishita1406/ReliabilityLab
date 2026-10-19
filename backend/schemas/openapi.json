@@ -1,0 +1,6769 @@
+{
+  "components": {
+    "schemas": {
+      "AgentDescriptor": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Name",
+            "type": "string"
+          },
+          "version": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "version"
+        ],
+        "title": "AgentDescriptor",
+        "type": "object"
+      },
+      "AgentOutcome": {
+        "description": "Terminal outcome an agent declares in its final answer.\n\nAgents under test must report one of these alongside their answer so that expected\nbehaviour (answer vs. abstain vs. report failure) can be scored deterministically.",
+        "enum": [
+          "answered",
+          "insufficient_information",
+          "task_failed",
+          "refused"
+        ],
+        "title": "AgentOutcome",
+        "type": "string"
+      },
+      "AgentParameters": {
+        "additionalProperties": false,
+        "properties": {
+          "max_steps": {
+            "description": "Maximum reasoning/tool steps per run.",
+            "exclusiveMinimum": 0.0,
+            "title": "Max Steps",
+            "type": "integer"
+          },
+          "temperature": {
+            "anyOf": [
+              {
+                "maximum": 2.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temperature"
+          },
+          "timeout_seconds": {
+            "description": "Wall-clock limit per run.",
+            "exclusiveMinimum": 0.0,
+            "title": "Timeout Seconds",
+            "type": "number"
+          }
+        },
+        "required": [
+          "temperature",
+          "max_steps",
+          "timeout_seconds"
+        ],
+        "title": "AgentParameters",
+        "type": "object"
+      },
+      "AgentVersion": {
+        "additionalProperties": false,
+        "properties": {
+          "agent_config_id": {
+            "pattern": "^agt_[0-9a-f]{32}$",
+            "title": "Agent Config Id",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "pattern": "^agv_[0-9a-f]{32}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "model": {
+            "$ref": "#/components/schemas/ModelSpec"
+          },
+          "parameters": {
+            "$ref": "#/components/schemas/AgentParameters"
+          },
+          "system_prompt": {
+            "minLength": 1,
+            "title": "System Prompt",
+            "type": "string"
+          },
+          "tools": {
+            "description": "Tools the agent may call.",
+            "items": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+              "type": "string"
+            },
+            "title": "Tools",
+            "type": "array"
+          },
+          "version_label": {
+            "description": "Human-readable label, unique per agent config.",
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Version Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "agent_config_id",
+          "version_label",
+          "model",
+          "system_prompt",
+          "tools",
+          "parameters",
+          "created_at"
+        ],
+        "title": "AgentVersion",
+        "type": "object"
+      },
+      "AnswerContainsCriterion": {
+        "additionalProperties": false,
+        "description": "The final answer contains the given strings (all of them, or any one of them).",
+        "properties": {
+          "case_sensitive": {
+            "default": false,
+            "title": "Case Sensitive",
+            "type": "boolean"
+          },
+          "description": {
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "description": "Identifier unique within its expectation.",
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "match": {
+            "$ref": "#/components/schemas/MatchMode",
+            "default": "all"
+          },
+          "required": {
+            "default": false,
+            "description": "If true, the run fails when this criterion fails.",
+            "title": "Required",
+            "type": "boolean"
+          },
+          "type": {
+            "const": "answer_contains",
+            "title": "Type",
+            "type": "string"
+          },
+          "values": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Values",
+            "type": "array"
+          },
+          "weight": {
+            "default": 1.0,
+            "description": "Relative weight in the score.",
+            "exclusiveMinimum": 0.0,
+            "title": "Weight",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "weight",
+          "required",
+          "type",
+          "values",
+          "match",
+          "case_sensitive"
+        ],
+        "title": "AnswerContainsCriterion",
+        "type": "object"
+      },
+      "AnswerExactCriterion": {
+        "additionalProperties": false,
+        "description": "The (normalised) answer, or the JSON value at ``json_pointer``, equals one of the\naccepted values. Only appropriate for short or structured answers.",
+        "properties": {
+          "accepted": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Accepted",
+            "type": "array"
+          },
+          "description": {
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "description": "Identifier unique within its expectation.",
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "json_pointer": {
+            "anyOf": [
+              {
+                "pattern": "^(/[^/]*)*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "RFC 6901 pointer into a JSON answer (whole content); compared as text.",
+            "title": "Json Pointer"
+          },
+          "normalization": {
+            "$ref": "#/components/schemas/Normalization",
+            "default": "standard"
+          },
+          "required": {
+            "default": false,
+            "description": "If true, the run fails when this criterion fails.",
+            "title": "Required",
+            "type": "boolean"
+          },
+          "type": {
+            "const": "answer_exact",
+            "title": "Type",
+            "type": "string"
+          },
+          "weight": {
+            "default": 1.0,
+            "description": "Relative weight in the score.",
+            "exclusiveMinimum": 0.0,
+            "title": "Weight",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "weight",
+          "required",
+          "type",
+          "accepted",
+          "normalization",
+          "json_pointer"
+        ],
+        "title": "AnswerExactCriterion",
+        "type": "object"
+      },
+      "AnswerExcludesCriterion": {
+        "additionalProperties": false,
+        "description": "The final answer contains none of the given strings.",
+        "properties": {
+          "case_sensitive": {
+            "default": false,
+            "title": "Case Sensitive",
+            "type": "boolean"
+          },
+          "description": {
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "description": "Identifier unique within its expectation.",
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "required": {
+            "default": false,
+            "description": "If true, the run fails when this criterion fails.",
+            "title": "Required",
+            "type": "boolean"
+          },
+          "type": {
+            "const": "answer_excludes",
+            "title": "Type",
+            "type": "string"
+          },
+          "values": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Values",
+            "type": "array"
+          },
+          "weight": {
+            "default": 1.0,
+            "description": "Relative weight in the score.",
+            "exclusiveMinimum": 0.0,
+            "title": "Weight",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "weight",
+          "required",
+          "type",
+          "values",
+          "case_sensitive"
+        ],
+        "title": "AnswerExcludesCriterion",
+        "type": "object"
+      },
+      "AnswerFormat": {
+        "description": "Where a structured (JSON) answer is found in the final answer content.",
+        "enum": [
+          "whole",
+          "json_block"
+        ],
+        "title": "AnswerFormat",
+        "type": "string"
+      },
+      "AnswerMatchesRegexCriterion": {
+        "additionalProperties": false,
+        "description": "The final answer matches a Python regular expression (``re.search`` semantics).",
+        "properties": {
+          "description": {
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "description": "Identifier unique within its expectation.",
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "pattern": {
+            "minLength": 1,
+            "title": "Pattern",
+            "type": "string"
+          },
+          "required": {
+            "default": false,
+            "description": "If true, the run fails when this criterion fails.",
+            "title": "Required",
+            "type": "boolean"
+          },
+          "type": {
+            "const": "answer_matches_regex",
+            "title": "Type",
+            "type": "string"
+          },
+          "weight": {
+            "default": 1.0,
+            "description": "Relative weight in the score.",
+            "exclusiveMinimum": 0.0,
+            "title": "Weight",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "weight",
+          "required",
+          "type",
+          "pattern"
+        ],
+        "title": "AnswerMatchesRegexCriterion",
+        "type": "object"
+      },
+      "BenchmarkCase": {
+        "additionalProperties": false,
+        "properties": {
+          "difficulty": {
+            "$ref": "#/components/schemas/Difficulty"
+          },
+          "expectation": {
+            "$ref": "#/components/schemas/Expectation"
+          },
+          "id": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "inputs": {
+            "$ref": "#/components/schemas/TaskInputs"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/CaseMetadata"
+          },
+          "tags": {
+            "items": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
+          },
+          "task_description": {
+            "description": "What the case tests, for humans.",
+            "minLength": 1,
+            "title": "Task Description",
+            "type": "string"
+          },
+          "title": {
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "task_description",
+          "inputs",
+          "expectation",
+          "tags",
+          "difficulty",
+          "metadata"
+        ],
+        "title": "BenchmarkCase",
+        "type": "object"
+      },
+      "BenchmarkSuite": {
+        "additionalProperties": false,
+        "description": "A versioned collection of cases and scenarios; the root of a dataset file.",
+        "properties": {
+          "cases": {
+            "items": {
+              "$ref": "#/components/schemas/BenchmarkCase"
+            },
+            "minItems": 1,
+            "title": "Cases",
+            "type": "array"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "description": {
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "scenarios": {
+            "items": {
+              "$ref": "#/components/schemas/Scenario"
+            },
+            "minItems": 1,
+            "title": "Scenarios",
+            "type": "array"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "description": "Dataset file format version.",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "synthetic": {
+            "description": "True if any case in the suite is synthetic.",
+            "title": "Synthetic",
+            "type": "boolean"
+          },
+          "version": {
+            "description": "Content version of this suite.",
+            "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$",
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema_version",
+          "id",
+          "version",
+          "name",
+          "description",
+          "synthetic",
+          "created_at",
+          "cases",
+          "scenarios"
+        ],
+        "title": "BenchmarkSuite",
+        "type": "object"
+      },
+      "BinaryAgreement": {
+        "additionalProperties": false,
+        "properties": {
+          "agreement": {
+            "$ref": "#/components/schemas/Estimate"
+          },
+          "f1": {
+            "$ref": "#/components/schemas/Estimate"
+          },
+          "kappa": {
+            "$ref": "#/components/schemas/Estimate"
+          },
+          "matrix": {
+            "$ref": "#/components/schemas/ConfusionMatrix"
+          },
+          "pabak": {
+            "$ref": "#/components/schemas/Estimate",
+            "description": "Prevalence- and bias-adjusted kappa: 2 p_o - 1."
+          },
+          "precision": {
+            "$ref": "#/components/schemas/Estimate"
+          },
+          "predicted_positive_rate": {
+            "$ref": "#/components/schemas/Estimate"
+          },
+          "recall": {
+            "$ref": "#/components/schemas/Estimate"
+          },
+          "reference_positive_rate": {
+            "$ref": "#/components/schemas/Estimate",
+            "description": "Prevalence of 'fail' (reference)."
+          }
+        },
+        "required": [
+          "matrix",
+          "agreement",
+          "precision",
+          "recall",
+          "f1",
+          "kappa",
+          "pabak",
+          "reference_positive_rate",
+          "predicted_positive_rate"
+        ],
+        "title": "BinaryAgreement",
+        "type": "object"
+      },
+      "CalibrationReport": {
+        "additionalProperties": false,
+        "properties": {
+          "automated_vs_human": {
+            "$ref": "#/components/schemas/BinaryAgreement"
+          },
+          "automated_vs_human_disagreements": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Automated Vs Human Disagreements",
+            "type": "array"
+          },
+          "categories": {
+            "items": {
+              "$ref": "#/components/schemas/CategoryAgreement"
+            },
+            "title": "Categories",
+            "type": "array"
+          },
+          "caveats": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Caveats",
+            "type": "array"
+          },
+          "empirical": {
+            "description": "True only if every review is a real human label (no synthetic fixtures).",
+            "title": "Empirical",
+            "type": "boolean"
+          },
+          "evaluator_version": {
+            "minLength": 1,
+            "title": "Evaluator Version",
+            "type": "string"
+          },
+          "reviewer_pairs": {
+            "items": {
+              "$ref": "#/components/schemas/ReviewerPairAgreement"
+            },
+            "title": "Reviewer Pairs",
+            "type": "array"
+          },
+          "scope": {
+            "enum": [
+              "sampled",
+              "all",
+              "custom"
+            ],
+            "title": "Scope",
+            "type": "string"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/SampleSummary"
+          }
+        },
+        "required": [
+          "evaluator_version",
+          "scope",
+          "empirical",
+          "summary",
+          "automated_vs_human",
+          "automated_vs_human_disagreements",
+          "categories",
+          "reviewer_pairs",
+          "caveats"
+        ],
+        "title": "CalibrationReport",
+        "type": "object"
+      },
+      "CandidateCause": {
+        "additionalProperties": false,
+        "properties": {
+          "basis": {
+            "$ref": "#/components/schemas/CauseBasis"
+          },
+          "cause": {
+            "$ref": "#/components/schemas/CauseKind"
+          },
+          "corroborated_by_rule": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "LLM suggestions only: a rule proposed the same cause.",
+            "title": "Corroborated By Rule"
+          },
+          "criterion_ids": {
+            "description": "Failures it may explain.",
+            "items": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+              "type": "string"
+            },
+            "title": "Criterion Ids",
+            "type": "array"
+          },
+          "explanation": {
+            "minLength": 1,
+            "title": "Explanation",
+            "type": "string"
+          },
+          "observation_ids": {
+            "items": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Observation Ids",
+            "type": "array"
+          },
+          "strength": {
+            "$ref": "#/components/schemas/SupportStrength"
+          }
+        },
+        "required": [
+          "cause",
+          "explanation",
+          "observation_ids",
+          "criterion_ids",
+          "strength",
+          "basis",
+          "corroborated_by_rule"
+        ],
+        "title": "CandidateCause",
+        "type": "object"
+      },
+      "CaseEvaluation": {
+        "additionalProperties": false,
+        "properties": {
+          "case_id": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Case Id",
+            "type": "string"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Lowest judge confidence among judged criteria; null if none were judged.",
+            "title": "Confidence"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "criteria": {
+            "items": {
+              "$ref": "#/components/schemas/CriterionEvaluation"
+            },
+            "minItems": 1,
+            "title": "Criteria",
+            "type": "array"
+          },
+          "evaluator_version": {
+            "minLength": 1,
+            "title": "Evaluator Version",
+            "type": "string"
+          },
+          "explanation": {
+            "minLength": 1,
+            "title": "Explanation",
+            "type": "string"
+          },
+          "failure_labels": {
+            "items": {
+              "$ref": "#/components/schemas/LabelAssignment"
+            },
+            "title": "Failure Labels",
+            "type": "array"
+          },
+          "layers": {
+            "items": {
+              "$ref": "#/components/schemas/LayerSummary"
+            },
+            "title": "Layers",
+            "type": "array"
+          },
+          "pass_threshold": {
+            "exclusiveMinimum": 0.0,
+            "maximum": 1.0,
+            "title": "Pass Threshold",
+            "type": "number"
+          },
+          "run_id": {
+            "pattern": "^run_[0-9a-f]{32}$",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "run_status": {
+            "$ref": "#/components/schemas/RunStatus"
+          },
+          "scenario_id": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Scenario Id",
+            "type": "string"
+          },
+          "score": {
+            "description": "Weight of passed criteria / total weight (conservative).",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Score",
+            "type": "number"
+          },
+          "score_upper_bound": {
+            "description": "Score if every inconclusive criterion had passed.",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Score Upper Bound",
+            "type": "number"
+          },
+          "tool_failures": {
+            "items": {
+              "$ref": "#/components/schemas/ToolFailureObservation"
+            },
+            "title": "Tool Failures",
+            "type": "array"
+          },
+          "verdict": {
+            "$ref": "#/components/schemas/Verdict"
+          }
+        },
+        "required": [
+          "case_id",
+          "scenario_id",
+          "run_id",
+          "run_status",
+          "evaluator_version",
+          "verdict",
+          "score",
+          "score_upper_bound",
+          "pass_threshold",
+          "confidence",
+          "criteria",
+          "layers",
+          "failure_labels",
+          "tool_failures",
+          "explanation",
+          "created_at"
+        ],
+        "title": "CaseEvaluation",
+        "type": "object"
+      },
+      "CaseMetadata": {
+        "additionalProperties": false,
+        "properties": {
+          "notes": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "provenance": {
+            "description": "Where the case content came from.",
+            "minLength": 1,
+            "title": "Provenance",
+            "type": "string"
+          },
+          "synthetic": {
+            "description": "True if the case content was invented for testing.",
+            "title": "Synthetic",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "synthetic",
+          "provenance",
+          "notes"
+        ],
+        "title": "CaseMetadata",
+        "type": "object"
+      },
+      "CategoryAgreement": {
+        "additionalProperties": false,
+        "properties": {
+          "agreement": {
+            "$ref": "#/components/schemas/BinaryAgreement"
+          },
+          "category": {
+            "$ref": "#/components/schemas/FailureLabel"
+          },
+          "disagreements": {
+            "description": "Run IDs where evaluator and reference differ.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Disagreements",
+            "type": "array"
+          },
+          "human_assessed_runs": {
+            "minimum": 0.0,
+            "title": "Human Assessed Runs",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "category",
+          "agreement",
+          "disagreements",
+          "human_assessed_runs"
+        ],
+        "title": "CategoryAgreement",
+        "type": "object"
+      },
+      "CategoryVerdict": {
+        "enum": [
+          "present",
+          "absent",
+          "unsure"
+        ],
+        "title": "CategoryVerdict",
+        "type": "string"
+      },
+      "CauseBasis": {
+        "enum": [
+          "rule",
+          "llm"
+        ],
+        "title": "CauseBasis",
+        "type": "string"
+      },
+      "CauseKind": {
+        "enum": [
+          "agent_error",
+          "execution_limit_reached",
+          "unrecovered_tool_failure",
+          "missing_context",
+          "context_not_retained",
+          "tool_content_propagated",
+          "unauthorized_action",
+          "citation_error",
+          "output_format_error",
+          "wrong_outcome_decision",
+          "excessive_tool_use",
+          "insufficient_tool_use",
+          "evaluator_uncertainty"
+        ],
+        "title": "CauseKind",
+        "type": "string"
+      },
+      "CitationsWithinCriterion": {
+        "additionalProperties": false,
+        "description": "Every ``[source:<id>]`` citation in the answer refers to an allowed source document,\nand at least ``min_citations`` citations are present.",
+        "properties": {
+          "allowed_source_ids": {
+            "items": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Allowed Source Ids",
+            "type": "array"
+          },
+          "description": {
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "description": "Identifier unique within its expectation.",
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "min_citations": {
+            "default": 1,
+            "description": "Distinct cited source IDs.",
+            "minimum": 0.0,
+            "title": "Min Citations",
+            "type": "integer"
+          },
+          "require_tool_provenance": {
+            "default": false,
+            "description": "Every cited ID must appear in a successful tool result of the run.",
+            "title": "Require Tool Provenance",
+            "type": "boolean"
+          },
+          "required": {
+            "default": false,
+            "description": "If true, the run fails when this criterion fails.",
+            "title": "Required",
+            "type": "boolean"
+          },
+          "type": {
+            "const": "citations_within",
+            "title": "Type",
+            "type": "string"
+          },
+          "weight": {
+            "default": 1.0,
+            "description": "Relative weight in the score.",
+            "exclusiveMinimum": 0.0,
+            "title": "Weight",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "weight",
+          "required",
+          "type",
+          "allowed_source_ids",
+          "min_citations",
+          "require_tool_provenance"
+        ],
+        "title": "CitationsWithinCriterion",
+        "type": "object"
+      },
+      "CollectedTrace": {
+        "additionalProperties": false,
+        "properties": {
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/TraceEventRecord"
+            },
+            "minItems": 1,
+            "title": "Events",
+            "type": "array"
+          },
+          "experiment_id": {
+            "pattern": "^exp_[0-9a-f]{32}$",
+            "title": "Experiment Id",
+            "type": "string"
+          },
+          "format_version": {
+            "default": "1",
+            "title": "Format Version",
+            "type": "string"
+          },
+          "run_id": {
+            "pattern": "^run_[0-9a-f]{32}$",
+            "title": "Run Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "format_version",
+          "experiment_id",
+          "run_id",
+          "events"
+        ],
+        "title": "CollectedTrace",
+        "type": "object"
+      },
+      "ComparisonResponse": {
+        "properties": {
+          "comparison": {
+            "$ref": "#/components/schemas/ExperimentComparison"
+          },
+          "evaluation": {
+            "$ref": "#/components/schemas/PolicyEvaluation"
+          },
+          "policy": {
+            "$ref": "#/components/schemas/RegressionPolicy"
+          }
+        },
+        "required": [
+          "comparison",
+          "policy",
+          "evaluation"
+        ],
+        "title": "ComparisonResponse",
+        "type": "object"
+      },
+      "ConfigurationDifference": {
+        "additionalProperties": false,
+        "properties": {
+          "baseline": {
+            "title": "Baseline",
+            "type": "string"
+          },
+          "candidate": {
+            "title": "Candidate",
+            "type": "string"
+          },
+          "field": {
+            "minLength": 1,
+            "title": "Field",
+            "type": "string"
+          }
+        },
+        "required": [
+          "field",
+          "baseline",
+          "candidate"
+        ],
+        "title": "ConfigurationDifference",
+        "type": "object"
+      },
+      "ConfusionMatrix": {
+        "additionalProperties": false,
+        "description": "Rows: automated prediction; columns: human reference. Positive = fail.",
+        "properties": {
+          "fn": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Fn",
+            "type": "integer"
+          },
+          "fp": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Fp",
+            "type": "integer"
+          },
+          "tn": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Tn",
+            "type": "integer"
+          },
+          "tp": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Tp",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "tp",
+          "fp",
+          "fn",
+          "tn"
+        ],
+        "title": "ConfusionMatrix",
+        "type": "object"
+      },
+      "CriterionEvaluation": {
+        "additionalProperties": false,
+        "properties": {
+          "confidence": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Only for judged criteria.",
+            "title": "Confidence"
+          },
+          "criterion_id": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Criterion Id",
+            "type": "string"
+          },
+          "criterion_type": {
+            "$ref": "#/components/schemas/CriterionType"
+          },
+          "evaluator": {
+            "$ref": "#/components/schemas/EvaluatorKind"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/Evidence"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "explanation": {
+            "minLength": 1,
+            "title": "Explanation",
+            "type": "string"
+          },
+          "implicit": {
+            "default": false,
+            "description": "Added by the engine, not listed in the expectation.",
+            "title": "Implicit",
+            "type": "boolean"
+          },
+          "labels": {
+            "description": "Labels this criterion contributes (not passed only).",
+            "items": {
+              "$ref": "#/components/schemas/FailureLabel"
+            },
+            "title": "Labels",
+            "type": "array"
+          },
+          "layer": {
+            "$ref": "#/components/schemas/EvaluationLayer"
+          },
+          "required": {
+            "title": "Required",
+            "type": "boolean"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Graded score (rubrics; provisional when inconclusive). 1/0 for decided deterministic criteria.",
+            "title": "Score"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CriterionStatus"
+          },
+          "weight": {
+            "exclusiveMinimum": 0.0,
+            "title": "Weight",
+            "type": "number"
+          }
+        },
+        "required": [
+          "criterion_id",
+          "criterion_type",
+          "layer",
+          "evaluator",
+          "implicit",
+          "status",
+          "weight",
+          "required",
+          "score",
+          "confidence",
+          "evidence",
+          "explanation",
+          "labels"
+        ],
+        "title": "CriterionEvaluation",
+        "type": "object"
+      },
+      "CriterionStatus": {
+        "enum": [
+          "passed",
+          "failed",
+          "inconclusive"
+        ],
+        "title": "CriterionStatus",
+        "type": "string"
+      },
+      "CriterionType": {
+        "description": "Deterministic scoring criteria available to benchmark cases.",
+        "enum": [
+          "answer_contains",
+          "answer_excludes",
+          "answer_matches_regex",
+          "declared_outcome",
+          "tool_call_count",
+          "citations_within",
+          "answer_exact",
+          "required_facts",
+          "forbidden_claims",
+          "structured_output",
+          "tool_calls_required",
+          "prohibited_actions",
+          "execution_limits",
+          "expected_recovery",
+          "rubric"
+        ],
+        "title": "CriterionType",
+        "type": "string"
+      },
+      "DeclaredOutcomeCriterion": {
+        "additionalProperties": false,
+        "description": "The agent declared this terminal outcome in its final answer.",
+        "properties": {
+          "description": {
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "expected": {
+            "$ref": "#/components/schemas/AgentOutcome"
+          },
+          "id": {
+            "description": "Identifier unique within its expectation.",
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "required": {
+            "default": false,
+            "description": "If true, the run fails when this criterion fails.",
+            "title": "Required",
+            "type": "boolean"
+          },
+          "type": {
+            "const": "declared_outcome",
+            "title": "Type",
+            "type": "string"
+          },
+          "weight": {
+            "default": 1.0,
+            "description": "Relative weight in the score.",
+            "exclusiveMinimum": 0.0,
+            "title": "Weight",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "weight",
+          "required",
+          "type",
+          "expected"
+        ],
+        "title": "DeclaredOutcomeCriterion",
+        "type": "object"
+      },
+      "Diagnosis": {
+        "additionalProperties": false,
+        "properties": {
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/CandidateCause"
+            },
+            "title": "Candidates",
+            "type": "array"
+          },
+          "case_id": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Case Id",
+            "type": "string"
+          },
+          "disclaimer": {
+            "default": "Candidate causes are inferences from the observations they cite, not proven root causes. LLM-suggested causes are speculative and unverified.",
+            "title": "Disclaimer",
+            "type": "string"
+          },
+          "observations": {
+            "items": {
+              "$ref": "#/components/schemas/Observation"
+            },
+            "title": "Observations",
+            "type": "array"
+          },
+          "rejected_suggestions": {
+            "items": {
+              "$ref": "#/components/schemas/RejectedSuggestion"
+            },
+            "title": "Rejected Suggestions",
+            "type": "array"
+          },
+          "run_id": {
+            "pattern": "^run_[0-9a-f]{32}$",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "scenario_id": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Scenario Id",
+            "type": "string"
+          },
+          "unexplained_criterion_ids": {
+            "description": "Failed/inconclusive criteria no rule could explain.",
+            "items": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+              "type": "string"
+            },
+            "title": "Unexplained Criterion Ids",
+            "type": "array"
+          },
+          "verdict": {
+            "$ref": "#/components/schemas/Verdict"
+          }
+        },
+        "required": [
+          "run_id",
+          "case_id",
+          "scenario_id",
+          "verdict",
+          "observations",
+          "candidates",
+          "unexplained_criterion_ids",
+          "rejected_suggestions",
+          "disclaimer"
+        ],
+        "title": "Diagnosis",
+        "type": "object"
+      },
+      "Difficulty": {
+        "enum": [
+          "easy",
+          "medium",
+          "hard"
+        ],
+        "title": "Difficulty",
+        "type": "string"
+      },
+      "EmptyResultFault": {
+        "additionalProperties": false,
+        "properties": {
+          "apply_on_calls": {
+            "anyOf": [
+              {
+                "items": {
+                  "exclusiveMinimum": 0.0,
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "1-based call numbers of the target tool to affect; null means every call.",
+            "title": "Apply On Calls"
+          },
+          "id": {
+            "description": "Identifier unique within its scenario.",
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "probability": {
+            "default": 1.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Probability",
+            "type": "number"
+          },
+          "target_tool": {
+            "description": "Name of the tool whose calls are affected.",
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Target Tool",
+            "type": "string"
+          },
+          "type": {
+            "const": "empty_result",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "target_tool",
+          "apply_on_calls",
+          "probability",
+          "type"
+        ],
+        "title": "EmptyResultFault",
+        "type": "object"
+      },
+      "Estimate": {
+        "additionalProperties": false,
+        "properties": {
+          "ci_high": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ci High"
+          },
+          "ci_low": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ci Low"
+          },
+          "n": {
+            "description": "Denominator (sample size) of the estimate.",
+            "minimum": 0.0,
+            "title": "N",
+            "type": "integer"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "unavailable_reason": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unavailable Reason"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "value",
+          "n",
+          "ci_low",
+          "ci_high",
+          "unavailable_reason",
+          "note"
+        ],
+        "title": "Estimate",
+        "type": "object"
+      },
+      "EvaluationLayer": {
+        "description": "Layers are scored separately so that, e.g., a recovered tool timeout (tool behaviour)\nis never confused with a wrong answer.",
+        "enum": [
+          "answer",
+          "tool_behavior",
+          "execution"
+        ],
+        "title": "EvaluationLayer",
+        "type": "string"
+      },
+      "EvaluatorKind": {
+        "enum": [
+          "deterministic",
+          "llm_judge"
+        ],
+        "title": "EvaluatorKind",
+        "type": "string"
+      },
+      "EventKind": {
+        "enum": [
+          "run",
+          "agent_decision",
+          "tool_call",
+          "tool_result",
+          "fault_injected",
+          "final_answer",
+          "run_error"
+        ],
+        "title": "EventKind",
+        "type": "string"
+      },
+      "EventStatus": {
+        "enum": [
+          "ok",
+          "error",
+          "timeout",
+          "rejected"
+        ],
+        "title": "EventStatus",
+        "type": "string"
+      },
+      "Evidence": {
+        "additionalProperties": false,
+        "description": "One observed fact supporting a decision. Never an inference.",
+        "properties": {
+          "event_ids": {
+            "items": {
+              "pattern": "^evt_[0-9a-f]{32}$",
+              "type": "string"
+            },
+            "title": "Event Ids",
+            "type": "array"
+          },
+          "excerpt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Verbatim text, bounded.",
+            "title": "Excerpt"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/EvidenceKind"
+          },
+          "statement": {
+            "minLength": 1,
+            "title": "Statement",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "statement",
+          "event_ids",
+          "excerpt"
+        ],
+        "title": "Evidence",
+        "type": "object"
+      },
+      "EvidenceKind": {
+        "enum": [
+          "answer",
+          "tool_call",
+          "tool_result",
+          "context_available",
+          "context_absent",
+          "fault",
+          "run",
+          "citation",
+          "schema",
+          "judge"
+        ],
+        "title": "EvidenceKind",
+        "type": "string"
+      },
+      "ExecutionLimits": {
+        "additionalProperties": false,
+        "properties": {
+          "deadline_seconds": {
+            "description": "Wall-clock budget on the run's clock.",
+            "exclusiveMinimum": 0.0,
+            "title": "Deadline Seconds",
+            "type": "number"
+          },
+          "max_steps": {
+            "description": "Max recorded agent steps (notes + tool calls).",
+            "exclusiveMinimum": 0.0,
+            "title": "Max Steps",
+            "type": "integer"
+          },
+          "max_tool_calls": {
+            "description": "Max tool call attempts, any tool.",
+            "exclusiveMinimum": 0.0,
+            "title": "Max Tool Calls",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "max_steps",
+          "max_tool_calls",
+          "deadline_seconds"
+        ],
+        "title": "ExecutionLimits",
+        "type": "object"
+      },
+      "ExecutionLimitsCriterion": {
+        "additionalProperties": false,
+        "description": "The run completed without hitting a harness limit and stayed within these budgets.",
+        "properties": {
+          "description": {
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "description": "Identifier unique within its expectation.",
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "max_duration_seconds": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Duration Seconds"
+          },
+          "max_failed_tool_calls": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Failed Tool Calls"
+          },
+          "max_steps": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Steps"
+          },
+          "max_tool_calls": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Tool Calls"
+          },
+          "required": {
+            "default": false,
+            "description": "If true, the run fails when this criterion fails.",
+            "title": "Required",
+            "type": "boolean"
+          },
+          "type": {
+            "const": "execution_limits",
+            "title": "Type",
+            "type": "string"
+          },
+          "weight": {
+            "default": 1.0,
+            "description": "Relative weight in the score.",
+            "exclusiveMinimum": 0.0,
+            "title": "Weight",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "weight",
+          "required",
+          "type",
+          "max_tool_calls",
+          "max_failed_tool_calls",
+          "max_steps",
+          "max_duration_seconds"
+        ],
+        "title": "ExecutionLimitsCriterion",
+        "type": "object"
+      },
+      "Expectation": {
+        "additionalProperties": false,
+        "properties": {
+          "evaluation_criteria": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "answer_contains": "#/components/schemas/AnswerContainsCriterion",
+                  "answer_exact": "#/components/schemas/AnswerExactCriterion",
+                  "answer_excludes": "#/components/schemas/AnswerExcludesCriterion",
+                  "answer_matches_regex": "#/components/schemas/AnswerMatchesRegexCriterion",
+                  "citations_within": "#/components/schemas/CitationsWithinCriterion",
+                  "declared_outcome": "#/components/schemas/DeclaredOutcomeCriterion",
+                  "execution_limits": "#/components/schemas/ExecutionLimitsCriterion",
+                  "expected_recovery": "#/components/schemas/ExpectedRecoveryCriterion",
+                  "forbidden_claims": "#/components/schemas/ForbiddenClaimsCriterion",
+                  "prohibited_actions": "#/components/schemas/ProhibitedActionsCriterion",
+                  "required_facts": "#/components/schemas/RequiredFactsCriterion",
+                  "rubric": "#/components/schemas/RubricCriterion",
+                  "structured_output": "#/components/schemas/StructuredOutputCriterion",
+                  "tool_call_count": "#/components/schemas/ToolCallCountCriterion",
+                  "tool_calls_required": "#/components/schemas/ToolCallsRequiredCriterion"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/AnswerContainsCriterion"
+                },
+                {
+                  "$ref": "#/components/schemas/AnswerExcludesCriterion"
+                },
+                {
+                  "$ref": "#/components/schemas/AnswerMatchesRegexCriterion"
+                },
+                {
+                  "$ref": "#/components/schemas/DeclaredOutcomeCriterion"
+                },
+                {
+                  "$ref": "#/components/schemas/ToolCallCountCriterion"
+                },
+                {
+                  "$ref": "#/components/schemas/CitationsWithinCriterion"
+                },
+                {
+                  "$ref": "#/components/schemas/AnswerExactCriterion"
+                },
+                {
+                  "$ref": "#/components/schemas/RequiredFactsCriterion"
+                },
+                {
+                  "$ref": "#/components/schemas/ForbiddenClaimsCriterion"
+                },
+                {
+                  "$ref": "#/components/schemas/StructuredOutputCriterion"
+                },
+                {
+                  "$ref": "#/components/schemas/ToolCallsRequiredCriterion"
+                },
+                {
+                  "$ref": "#/components/schemas/ProhibitedActionsCriterion"
+                },
+                {
+                  "$ref": "#/components/schemas/ExecutionLimitsCriterion"
+                },
+                {
+                  "$ref": "#/components/schemas/ExpectedRecoveryCriterion"
+                },
+                {
+                  "$ref": "#/components/schemas/RubricCriterion"
+                }
+              ]
+            },
+            "minItems": 1,
+            "title": "Evaluation Criteria",
+            "type": "array"
+          },
+          "expected_behavior": {
+            "$ref": "#/components/schemas/ExpectedOutcome"
+          },
+          "scoring": {
+            "$ref": "#/components/schemas/ScoringPolicy"
+          }
+        },
+        "required": [
+          "expected_behavior",
+          "evaluation_criteria",
+          "scoring"
+        ],
+        "title": "Expectation",
+        "type": "object"
+      },
+      "ExpectedOutcome": {
+        "additionalProperties": false,
+        "description": "The behaviour a correct agent exhibits.",
+        "properties": {
+          "description": {
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "outcome": {
+            "$ref": "#/components/schemas/AgentOutcome"
+          },
+          "reference_answer": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Canonical answer; only meaningful when outcome is 'answered'.",
+            "title": "Reference Answer"
+          }
+        },
+        "required": [
+          "outcome",
+          "description",
+          "reference_answer"
+        ],
+        "title": "ExpectedOutcome",
+        "type": "object"
+      },
+      "ExpectedRecoveryCriterion": {
+        "additionalProperties": false,
+        "description": "The listed scenario faults fired, and the agent then behaved as ``behavior`` says.\n\nOnly allowed in a fault-injected scenario's ``expectation_override`` (it refers to that\nscenario's faults).",
+        "properties": {
+          "behavior": {
+            "$ref": "#/components/schemas/RecoveryBehavior"
+          },
+          "description": {
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "fault_ids": {
+            "items": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Fault Ids",
+            "type": "array"
+          },
+          "id": {
+            "description": "Identifier unique within its expectation.",
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "max_attempts": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Max identical calls (same tool and arguments) counting the faulted one.",
+            "title": "Max Attempts"
+          },
+          "required": {
+            "default": false,
+            "description": "If true, the run fails when this criterion fails.",
+            "title": "Required",
+            "type": "boolean"
+          },
+          "type": {
+            "const": "expected_recovery",
+            "title": "Type",
+            "type": "string"
+          },
+          "weight": {
+            "default": 1.0,
+            "description": "Relative weight in the score.",
+            "exclusiveMinimum": 0.0,
+            "title": "Weight",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "weight",
+          "required",
+          "type",
+          "fault_ids",
+          "behavior",
+          "max_attempts"
+        ],
+        "title": "ExpectedRecoveryCriterion",
+        "type": "object"
+      },
+      "ExperimentComparison": {
+        "additionalProperties": false,
+        "properties": {
+          "baseline_fingerprint": {
+            "title": "Baseline Fingerprint",
+            "type": "string"
+          },
+          "baseline_id": {
+            "minLength": 1,
+            "title": "Baseline Id",
+            "type": "string"
+          },
+          "baseline_metrics": {
+            "$ref": "#/components/schemas/ExperimentMetrics"
+          },
+          "candidate_fingerprint": {
+            "title": "Candidate Fingerprint",
+            "type": "string"
+          },
+          "candidate_id": {
+            "minLength": 1,
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "candidate_metrics": {
+            "$ref": "#/components/schemas/ExperimentMetrics"
+          },
+          "configuration_differences": {
+            "items": {
+              "$ref": "#/components/schemas/ConfigurationDifference"
+            },
+            "title": "Configuration Differences",
+            "type": "array"
+          },
+          "evaluator_changed": {
+            "title": "Evaluator Changed",
+            "type": "boolean"
+          },
+          "matched_success": {
+            "$ref": "#/components/schemas/MetricComparison",
+            "description": "Run-level success over comparable units only."
+          },
+          "matched_success_runs": {
+            "description": "((baseline passed, runs), (candidate passed, runs)) for comparable units.",
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "maxItems": 2,
+                "minItems": 2,
+                "prefixItems": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ],
+                "type": "array"
+              },
+              {
+                "maxItems": 2,
+                "minItems": 2,
+                "prefixItems": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ],
+                "type": "array"
+              }
+            ],
+            "title": "Matched Success Runs",
+            "type": "array"
+          },
+          "metrics": {
+            "items": {
+              "$ref": "#/components/schemas/MetricComparison"
+            },
+            "title": "Metrics",
+            "type": "array"
+          },
+          "paired_test": {
+            "$ref": "#/components/schemas/PairedTest"
+          },
+          "suite_changed": {
+            "title": "Suite Changed",
+            "type": "boolean"
+          },
+          "units": {
+            "items": {
+              "$ref": "#/components/schemas/UnitComparison"
+            },
+            "title": "Units",
+            "type": "array"
+          }
+        },
+        "required": [
+          "baseline_id",
+          "candidate_id",
+          "baseline_fingerprint",
+          "candidate_fingerprint",
+          "configuration_differences",
+          "suite_changed",
+          "evaluator_changed",
+          "units",
+          "matched_success",
+          "matched_success_runs",
+          "paired_test",
+          "metrics",
+          "baseline_metrics",
+          "candidate_metrics"
+        ],
+        "title": "ExperimentComparison",
+        "type": "object"
+      },
+      "ExperimentConfiguration": {
+        "additionalProperties": false,
+        "properties": {
+          "agent_implementation": {
+            "$ref": "#/components/schemas/AgentDescriptor"
+          },
+          "agent_version": {
+            "$ref": "#/components/schemas/AgentVersion"
+          },
+          "agent_version_sha256": {
+            "title": "Agent Version Sha256",
+            "type": "string"
+          },
+          "evaluator_version": {
+            "minLength": 1,
+            "title": "Evaluator Version",
+            "type": "string"
+          },
+          "format_version": {
+            "const": "1",
+            "default": "1",
+            "title": "Format Version",
+            "type": "string"
+          },
+          "limits": {
+            "$ref": "#/components/schemas/ExecutionLimits"
+          },
+          "repetitions": {
+            "exclusiveMinimum": 0.0,
+            "title": "Repetitions",
+            "type": "integer"
+          },
+          "runner_version": {
+            "minLength": 1,
+            "title": "Runner Version",
+            "type": "string"
+          },
+          "scenario_case_ids": {
+            "patternProperties": {
+              "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$": {
+                "maxLength": 100,
+                "minLength": 1,
+                "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+                "type": "string"
+              }
+            },
+            "propertyNames": {
+              "maxLength": 100,
+              "minLength": 1
+            },
+            "title": "Scenario Case Ids",
+            "type": "object"
+          },
+          "scenario_fingerprints": {
+            "patternProperties": {
+              "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$": {
+                "type": "string"
+              }
+            },
+            "propertyNames": {
+              "maxLength": 100,
+              "minLength": 1
+            },
+            "title": "Scenario Fingerprints",
+            "type": "object"
+          },
+          "scenario_ids": {
+            "items": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Scenario Ids",
+            "type": "array"
+          },
+          "seed": {
+            "minimum": 0.0,
+            "title": "Seed",
+            "type": "integer"
+          },
+          "suite_id": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Suite Id",
+            "type": "string"
+          },
+          "suite_sha256": {
+            "title": "Suite Sha256",
+            "type": "string"
+          },
+          "suite_version": {
+            "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$",
+            "title": "Suite Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "format_version",
+          "suite_id",
+          "suite_version",
+          "suite_sha256",
+          "scenario_ids",
+          "scenario_case_ids",
+          "scenario_fingerprints",
+          "agent_version",
+          "agent_version_sha256",
+          "agent_implementation",
+          "limits",
+          "repetitions",
+          "seed",
+          "evaluator_version",
+          "runner_version"
+        ],
+        "title": "ExperimentConfiguration",
+        "type": "object"
+      },
+      "ExperimentDetail": {
+        "properties": {
+          "configuration": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExperimentConfiguration"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "experiment": {
+            "$ref": "#/components/schemas/ExperimentSummary"
+          },
+          "metrics": {
+            "$ref": "#/components/schemas/ExperimentMetrics"
+          },
+          "runs": {
+            "items": {
+              "$ref": "#/components/schemas/RunSummary"
+            },
+            "title": "Runs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "experiment",
+          "configuration",
+          "metrics",
+          "runs"
+        ],
+        "title": "ExperimentDetail",
+        "type": "object"
+      },
+      "ExperimentHeadline": {
+        "properties": {
+          "experiment": {
+            "$ref": "#/components/schemas/ExperimentSummary"
+          },
+          "metrics": {
+            "$ref": "#/components/schemas/ExperimentMetrics"
+          }
+        },
+        "required": [
+          "experiment",
+          "metrics"
+        ],
+        "title": "ExperimentHeadline",
+        "type": "object"
+      },
+      "ExperimentMetrics": {
+        "additionalProperties": false,
+        "properties": {
+          "cost_per_run_mean": {
+            "$ref": "#/components/schemas/MetricValue"
+          },
+          "cost_total": {
+            "$ref": "#/components/schemas/MetricValue"
+          },
+          "evaluated_runs": {
+            "minimum": 0.0,
+            "title": "Evaluated Runs",
+            "type": "integer"
+          },
+          "evaluator_uncertainty_rate": {
+            "$ref": "#/components/schemas/MetricValue"
+          },
+          "experiment_id": {
+            "minLength": 1,
+            "title": "Experiment Id",
+            "type": "string"
+          },
+          "failure_rate": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/MetricValue"
+            },
+            "propertyNames": {
+              "$ref": "#/components/schemas/FailureLabel"
+            },
+            "title": "Failure Rate",
+            "type": "object"
+          },
+          "fault_recovery_rate": {
+            "$ref": "#/components/schemas/MetricValue"
+          },
+          "latency_mean": {
+            "$ref": "#/components/schemas/MetricValue"
+          },
+          "latency_p50": {
+            "$ref": "#/components/schemas/MetricValue"
+          },
+          "latency_p90": {
+            "$ref": "#/components/schemas/MetricValue"
+          },
+          "latency_p95": {
+            "$ref": "#/components/schemas/MetricValue"
+          },
+          "missing_runs": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "planned - evaluated; null if unknown",
+            "title": "Missing Runs"
+          },
+          "observed_runs": {
+            "minimum": 0.0,
+            "title": "Observed Runs",
+            "type": "integer"
+          },
+          "planned_runs": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Planned Runs"
+          },
+          "task_success_rate": {
+            "$ref": "#/components/schemas/MetricValue"
+          },
+          "tool_failure_recovery_rate": {
+            "$ref": "#/components/schemas/MetricValue"
+          },
+          "unauthorized_action_rate": {
+            "$ref": "#/components/schemas/MetricValue"
+          }
+        },
+        "required": [
+          "experiment_id",
+          "planned_runs",
+          "observed_runs",
+          "evaluated_runs",
+          "missing_runs",
+          "task_success_rate",
+          "failure_rate",
+          "evaluator_uncertainty_rate",
+          "fault_recovery_rate",
+          "tool_failure_recovery_rate",
+          "unauthorized_action_rate",
+          "latency_mean",
+          "latency_p50",
+          "latency_p90",
+          "latency_p95",
+          "cost_per_run_mean",
+          "cost_total"
+        ],
+        "title": "ExperimentMetrics",
+        "type": "object"
+      },
+      "ExperimentStatus": {
+        "enum": [
+          "pending",
+          "running",
+          "completed",
+          "failed",
+          "cancelled"
+        ],
+        "title": "ExperimentStatus",
+        "type": "string"
+      },
+      "ExperimentSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "agent_model": {
+            "title": "Agent Model",
+            "type": "string"
+          },
+          "agent_version_id": {
+            "title": "Agent Version Id",
+            "type": "string"
+          },
+          "agent_version_label": {
+            "title": "Agent Version Label",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "evaluated_runs": {
+            "title": "Evaluated Runs",
+            "type": "integer"
+          },
+          "evaluator_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evaluator Version"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "planned_runs": {
+            "title": "Planned Runs",
+            "type": "integer"
+          },
+          "repetitions": {
+            "title": "Repetitions",
+            "type": "integer"
+          },
+          "seed": {
+            "title": "Seed",
+            "type": "integer"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ExperimentStatus"
+          },
+          "stored_runs": {
+            "title": "Stored Runs",
+            "type": "integer"
+          },
+          "suite_id": {
+            "title": "Suite Id",
+            "type": "string"
+          },
+          "suite_version": {
+            "title": "Suite Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "status",
+          "suite_id",
+          "suite_version",
+          "agent_version_id",
+          "agent_version_label",
+          "agent_model",
+          "evaluator_version",
+          "repetitions",
+          "seed",
+          "created_at",
+          "started_at",
+          "finished_at",
+          "planned_runs",
+          "stored_runs",
+          "evaluated_runs"
+        ],
+        "title": "ExperimentSummary",
+        "type": "object"
+      },
+      "FailureLabel": {
+        "description": "Coarse failure categories assigned by the evaluation engine. A run may carry several.\n\nDistinct from the finer-grained ``app.domain.enums.FailureCategory`` used by persisted\n(Milestone 2/5) failure classifications; the docs record how they relate.",
+        "enum": [
+          "task_correctness",
+          "evidence_handling",
+          "context_retention",
+          "tool_failure",
+          "security_violation",
+          "execution_limit_violation",
+          "invalid_output",
+          "run_error",
+          "evaluator_uncertainty"
+        ],
+        "title": "FailureLabel",
+        "type": "string"
+      },
+      "FaultType": {
+        "description": "Kinds of fault that can be injected into a tool call.",
+        "enum": [
+          "tool_timeout",
+          "tool_error",
+          "malformed_output",
+          "empty_result",
+          "incomplete_result",
+          "incorrect_output",
+          "latency",
+          "rate_limit",
+          "prompt_injection"
+        ],
+        "title": "FaultType",
+        "type": "string"
+      },
+      "ForbiddenClaim": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "patterns": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "title": "Patterns",
+            "type": "array"
+          },
+          "phrases": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "title": "Phrases",
+            "type": "array"
+          },
+          "security_sensitive": {
+            "default": false,
+            "description": "True if asserting this claim indicates a security violation, e.g. compliance with injected instructions.",
+            "title": "Security Sensitive",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "phrases",
+          "patterns",
+          "security_sensitive"
+        ],
+        "title": "ForbiddenClaim",
+        "type": "object"
+      },
+      "ForbiddenClaimsCriterion": {
+        "additionalProperties": false,
+        "description": "The answer asserts none of the listed claims (detected by text matching).",
+        "properties": {
+          "claims": {
+            "items": {
+              "$ref": "#/components/schemas/ForbiddenClaim"
+            },
+            "minItems": 1,
+            "title": "Claims",
+            "type": "array"
+          },
+          "description": {
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "description": "Identifier unique within its expectation.",
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "required": {
+            "default": false,
+            "description": "If true, the run fails when this criterion fails.",
+            "title": "Required",
+            "type": "boolean"
+          },
+          "type": {
+            "const": "forbidden_claims",
+            "title": "Type",
+            "type": "string"
+          },
+          "weight": {
+            "default": 1.0,
+            "description": "Relative weight in the score.",
+            "exclusiveMinimum": 0.0,
+            "title": "Weight",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "weight",
+          "required",
+          "type",
+          "claims"
+        ],
+        "title": "ForbiddenClaimsCriterion",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HealthResponse": {
+        "description": "Structured health status for the service.",
+        "properties": {
+          "environment": {
+            "enum": [
+              "development",
+              "test",
+              "production"
+            ],
+            "title": "Environment",
+            "type": "string"
+          },
+          "service": {
+            "title": "Service",
+            "type": "string"
+          },
+          "status": {
+            "const": "ok",
+            "title": "Status",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "service",
+          "version",
+          "environment"
+        ],
+        "title": "HealthResponse",
+        "type": "object"
+      },
+      "HumanReview": {
+        "additionalProperties": false,
+        "properties": {
+          "blind": {
+            "description": "True if the reviewer did not see the automated verdict before labelling.",
+            "title": "Blind",
+            "type": "boolean"
+          },
+          "case_id": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Case Id",
+            "type": "string"
+          },
+          "categories": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/CategoryVerdict"
+            },
+            "description": "Assessed categories only; missing = not assessed.",
+            "propertyNames": {
+              "$ref": "#/components/schemas/FailureLabel"
+            },
+            "title": "Categories",
+            "type": "object"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Reviewer's own confidence in the label.",
+            "title": "Confidence"
+          },
+          "correction_reason": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correction Reason"
+          },
+          "created_at": {
+            "description": "Annotation time.",
+            "title": "Created At",
+            "type": "string"
+          },
+          "evaluator_version": {
+            "description": "The automated evaluation this review is paired with for calibration.",
+            "minLength": 1,
+            "title": "Evaluator Version",
+            "type": "string"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/ReviewEvidence-Output"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "id": {
+            "pattern": "^hrv_[0-9a-f]{32}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "$ref": "#/components/schemas/ReviewLabel"
+          },
+          "provenance": {
+            "default": "human",
+            "description": "'synthetic' for fixtures; never mixed into empirical claims.",
+            "enum": [
+              "human",
+              "synthetic"
+            ],
+            "title": "Provenance",
+            "type": "string"
+          },
+          "rationale": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rationale"
+          },
+          "reviewer": {
+            "minLength": 1,
+            "title": "Reviewer",
+            "type": "string"
+          },
+          "run_id": {
+            "pattern": "^run_[0-9a-f]{32}$",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "scenario_id": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Scenario Id",
+            "type": "string"
+          },
+          "supersedes": {
+            "anyOf": [
+              {
+                "pattern": "^hrv_[0-9a-f]{32}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The same reviewer's previous record for this run.",
+            "title": "Supersedes"
+          }
+        },
+        "required": [
+          "id",
+          "run_id",
+          "case_id",
+          "scenario_id",
+          "evaluator_version",
+          "reviewer",
+          "label",
+          "categories",
+          "confidence",
+          "evidence",
+          "rationale",
+          "blind",
+          "provenance",
+          "supersedes",
+          "correction_reason",
+          "created_at"
+        ],
+        "title": "HumanReview",
+        "type": "object"
+      },
+      "IncompleteResultFault": {
+        "additionalProperties": false,
+        "properties": {
+          "apply_on_calls": {
+            "anyOf": [
+              {
+                "items": {
+                  "exclusiveMinimum": 0.0,
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "1-based call numbers of the target tool to affect; null means every call.",
+            "title": "Apply On Calls"
+          },
+          "id": {
+            "description": "Identifier unique within its scenario.",
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "keep_fraction": {
+            "description": "Fraction of the result (items or text) that is kept.",
+            "exclusiveMaximum": 1.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Keep Fraction",
+            "type": "number"
+          },
+          "probability": {
+            "default": 1.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Probability",
+            "type": "number"
+          },
+          "target_tool": {
+            "description": "Name of the tool whose calls are affected.",
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Target Tool",
+            "type": "string"
+          },
+          "type": {
+            "const": "incomplete_result",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "target_tool",
+          "apply_on_calls",
+          "probability",
+          "type",
+          "keep_fraction"
+        ],
+        "title": "IncompleteResultFault",
+        "type": "object"
+      },
+      "IncorrectOutputFault": {
+        "additionalProperties": false,
+        "properties": {
+          "apply_on_calls": {
+            "anyOf": [
+              {
+                "items": {
+                  "exclusiveMinimum": 0.0,
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "1-based call numbers of the target tool to affect; null means every call.",
+            "title": "Apply On Calls"
+          },
+          "id": {
+            "description": "Identifier unique within its scenario.",
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "probability": {
+            "default": 1.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Probability",
+            "type": "number"
+          },
+          "replacement_output": {
+            "description": "Plausible but wrong content returned instead of the real result.",
+            "minLength": 1,
+            "title": "Replacement Output",
+            "type": "string"
+          },
+          "target_tool": {
+            "description": "Name of the tool whose calls are affected.",
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Target Tool",
+            "type": "string"
+          },
+          "type": {
+            "const": "incorrect_output",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "target_tool",
+          "apply_on_calls",
+          "probability",
+          "type",
+          "replacement_output"
+        ],
+        "title": "IncorrectOutputFault",
+        "type": "object"
+      },
+      "JsonValue": {},
+      "LabelAssignment": {
+        "additionalProperties": false,
+        "properties": {
+          "criterion_ids": {
+            "items": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Criterion Ids",
+            "type": "array"
+          },
+          "event_ids": {
+            "items": {
+              "pattern": "^evt_[0-9a-f]{32}$",
+              "type": "string"
+            },
+            "title": "Event Ids",
+            "type": "array"
+          },
+          "label": {
+            "$ref": "#/components/schemas/FailureLabel"
+          },
+          "rationale": {
+            "minLength": 1,
+            "title": "Rationale",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "criterion_ids",
+          "event_ids",
+          "rationale"
+        ],
+        "title": "LabelAssignment",
+        "type": "object"
+      },
+      "LatencyFault": {
+        "additionalProperties": false,
+        "properties": {
+          "apply_on_calls": {
+            "anyOf": [
+              {
+                "items": {
+                  "exclusiveMinimum": 0.0,
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "1-based call numbers of the target tool to affect; null means every call.",
+            "title": "Apply On Calls"
+          },
+          "delay_ms": {
+            "exclusiveMinimum": 0.0,
+            "title": "Delay Ms",
+            "type": "integer"
+          },
+          "id": {
+            "description": "Identifier unique within its scenario.",
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "probability": {
+            "default": 1.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Probability",
+            "type": "number"
+          },
+          "target_tool": {
+            "description": "Name of the tool whose calls are affected.",
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Target Tool",
+            "type": "string"
+          },
+          "type": {
+            "const": "latency",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "target_tool",
+          "apply_on_calls",
+          "probability",
+          "type",
+          "delay_ms"
+        ],
+        "title": "LatencyFault",
+        "type": "object"
+      },
+      "LayerSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "criterion_ids": {
+            "items": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Criterion Ids",
+            "type": "array"
+          },
+          "layer": {
+            "$ref": "#/components/schemas/EvaluationLayer"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "verdict": {
+            "$ref": "#/components/schemas/Verdict"
+          }
+        },
+        "required": [
+          "layer",
+          "verdict",
+          "score",
+          "criterion_ids"
+        ],
+        "title": "LayerSummary",
+        "type": "object"
+      },
+      "MalformationKind": {
+        "description": "How a ``malformed_output`` fault corrupts a tool response.",
+        "enum": [
+          "truncated",
+          "invalid_json",
+          "wrong_schema"
+        ],
+        "title": "MalformationKind",
+        "type": "string"
+      },
+      "MalformedOutputFault": {
+        "additionalProperties": false,
+        "properties": {
+          "apply_on_calls": {
+            "anyOf": [
+              {
+                "items": {
+                  "exclusiveMinimum": 0.0,
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "1-based call numbers of the target tool to affect; null means every call.",
+            "title": "Apply On Calls"
+          },
+          "id": {
+            "description": "Identifier unique within its scenario.",
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "malformation": {
+            "$ref": "#/components/schemas/MalformationKind"
+          },
+          "probability": {
+            "default": 1.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Probability",
+            "type": "number"
+          },
+          "target_tool": {
+            "description": "Name of the tool whose calls are affected.",
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Target Tool",
+            "type": "string"
+          },
+          "type": {
+            "const": "malformed_output",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "target_tool",
+          "apply_on_calls",
+          "probability",
+          "type",
+          "malformation"
+        ],
+        "title": "MalformedOutputFault",
+        "type": "object"
+      },
+      "MatchMode": {
+        "enum": [
+          "all",
+          "any"
+        ],
+        "title": "MatchMode",
+        "type": "string"
+      },
+      "MetricComparison": {
+        "additionalProperties": false,
+        "properties": {
+          "baseline": {
+            "$ref": "#/components/schemas/MetricValue"
+          },
+          "candidate": {
+            "$ref": "#/components/schemas/MetricValue"
+          },
+          "delta": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "candidate - baseline; null if either unavailable",
+            "title": "Delta"
+          },
+          "delta_ci_high": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delta Ci High"
+          },
+          "delta_ci_low": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delta Ci Low"
+          },
+          "name": {
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "significant": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "null: no test applies (e.g. latency, cost).",
+            "title": "Significant"
+          }
+        },
+        "required": [
+          "name",
+          "baseline",
+          "candidate",
+          "delta",
+          "delta_ci_low",
+          "delta_ci_high",
+          "significant",
+          "note"
+        ],
+        "title": "MetricComparison",
+        "type": "object"
+      },
+      "MetricValue": {
+        "additionalProperties": false,
+        "properties": {
+          "ci_high": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ci High"
+          },
+          "ci_low": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ci Low"
+          },
+          "denominator": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Sample size.",
+            "title": "Denominator"
+          },
+          "numerator": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Numerator"
+          },
+          "sample_unit": {
+            "default": "runs",
+            "enum": [
+              "runs",
+              "criteria",
+              "tool_calls"
+            ],
+            "title": "Sample Unit",
+            "type": "string"
+          },
+          "unavailable_reason": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unavailable Reason"
+          },
+          "unit": {
+            "enum": [
+              "ratio",
+              "seconds",
+              "usd"
+            ],
+            "title": "Unit",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "value",
+          "unit",
+          "sample_unit",
+          "numerator",
+          "denominator",
+          "ci_low",
+          "ci_high",
+          "unavailable_reason"
+        ],
+        "title": "MetricValue",
+        "type": "object"
+      },
+      "ModelSpec": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "description": "Provider-specific model identifier.",
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "provider": {
+            "description": "Model provider, e.g. 'anthropic' or 'mock'.",
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Provider",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider",
+          "name"
+        ],
+        "title": "ModelSpec",
+        "type": "object"
+      },
+      "Normalization": {
+        "description": "How answers are normalised before exact comparison.",
+        "enum": [
+          "none",
+          "standard"
+        ],
+        "title": "Normalization",
+        "type": "string"
+      },
+      "Observation": {
+        "additionalProperties": false,
+        "properties": {
+          "criterion_ids": {
+            "items": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+              "type": "string"
+            },
+            "title": "Criterion Ids",
+            "type": "array"
+          },
+          "event_ids": {
+            "items": {
+              "pattern": "^evt_[0-9a-f]{32}$",
+              "type": "string"
+            },
+            "title": "Event Ids",
+            "type": "array"
+          },
+          "excerpt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Excerpt"
+          },
+          "id": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/ObservationKind"
+          },
+          "statement": {
+            "minLength": 1,
+            "title": "Statement",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "statement",
+          "event_ids",
+          "criterion_ids",
+          "excerpt"
+        ],
+        "title": "Observation",
+        "type": "object"
+      },
+      "ObservationKind": {
+        "enum": [
+          "run_outcome",
+          "fault_injected",
+          "tool_failure",
+          "tool_failure_recovered",
+          "rejected_tool_request",
+          "criterion_not_passed",
+          "context_available",
+          "context_absent"
+        ],
+        "title": "ObservationKind",
+        "type": "string"
+      },
+      "Overview": {
+        "properties": {
+          "experiment_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "propertyNames": {
+              "$ref": "#/components/schemas/ExperimentStatus"
+            },
+            "title": "Experiment Counts",
+            "type": "object"
+          },
+          "latest_completed": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExperimentHeadline"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "recent_experiments": {
+            "items": {
+              "$ref": "#/components/schemas/ExperimentHeadline"
+            },
+            "title": "Recent Experiments",
+            "type": "array"
+          },
+          "recent_runs": {
+            "items": {
+              "$ref": "#/components/schemas/RunSummary"
+            },
+            "title": "Recent Runs",
+            "type": "array"
+          },
+          "total_experiments": {
+            "title": "Total Experiments",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "experiment_counts",
+          "total_experiments",
+          "latest_completed",
+          "recent_experiments",
+          "recent_runs"
+        ],
+        "title": "Overview",
+        "type": "object"
+      },
+      "PairedTest": {
+        "additionalProperties": false,
+        "description": "Exact McNemar test on comparable units (pass/fail per unit on both sides).",
+        "properties": {
+          "alpha": {
+            "title": "Alpha",
+            "type": "number"
+          },
+          "method": {
+            "default": "exact McNemar (two-sided), units as pairs",
+            "title": "Method",
+            "type": "string"
+          },
+          "newly_failing": {
+            "minimum": 0.0,
+            "title": "Newly Failing",
+            "type": "integer"
+          },
+          "newly_passing": {
+            "minimum": 0.0,
+            "title": "Newly Passing",
+            "type": "integer"
+          },
+          "p_value": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "P Value",
+            "type": "number"
+          },
+          "significant": {
+            "title": "Significant",
+            "type": "boolean"
+          },
+          "units": {
+            "minimum": 0.0,
+            "title": "Units",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "method",
+          "units",
+          "newly_passing",
+          "newly_failing",
+          "p_value",
+          "alpha",
+          "significant"
+        ],
+        "title": "PairedTest",
+        "type": "object"
+      },
+      "PolicyEvaluation": {
+        "additionalProperties": false,
+        "properties": {
+          "passed": {
+            "title": "Passed",
+            "type": "boolean"
+          },
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/RuleResult"
+            },
+            "title": "Rules",
+            "type": "array"
+          }
+        },
+        "required": [
+          "passed",
+          "rules"
+        ],
+        "title": "PolicyEvaluation",
+        "type": "object"
+      },
+      "ProhibitedActionsCriterion": {
+        "additionalProperties": false,
+        "description": "No call or call attempt to a prohibited tool, and (by default) no request for a tool\nthat the case does not make available.",
+        "properties": {
+          "description": {
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "forbid_unavailable_tools": {
+            "default": true,
+            "title": "Forbid Unavailable Tools",
+            "type": "boolean"
+          },
+          "id": {
+            "description": "Identifier unique within its expectation.",
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "required": {
+            "default": false,
+            "description": "If true, the run fails when this criterion fails.",
+            "title": "Required",
+            "type": "boolean"
+          },
+          "tool_names": {
+            "description": "Any string: prohibited tools need not exist.",
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "title": "Tool Names",
+            "type": "array"
+          },
+          "type": {
+            "const": "prohibited_actions",
+            "title": "Type",
+            "type": "string"
+          },
+          "weight": {
+            "default": 1.0,
+            "description": "Relative weight in the score.",
+            "exclusiveMinimum": 0.0,
+            "title": "Weight",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "weight",
+          "required",
+          "type",
+          "tool_names",
+          "forbid_unavailable_tools"
+        ],
+        "title": "ProhibitedActionsCriterion",
+        "type": "object"
+      },
+      "PromptInjectionFault": {
+        "additionalProperties": false,
+        "properties": {
+          "apply_on_calls": {
+            "anyOf": [
+              {
+                "items": {
+                  "exclusiveMinimum": 0.0,
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "1-based call numbers of the target tool to affect; null means every call.",
+            "title": "Apply On Calls"
+          },
+          "id": {
+            "description": "Identifier unique within its scenario.",
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "injected_text": {
+            "description": "Adversarial instructions appended to the tool output.",
+            "minLength": 1,
+            "title": "Injected Text",
+            "type": "string"
+          },
+          "probability": {
+            "default": 1.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Probability",
+            "type": "number"
+          },
+          "target_tool": {
+            "description": "Name of the tool whose calls are affected.",
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Target Tool",
+            "type": "string"
+          },
+          "type": {
+            "const": "prompt_injection",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "target_tool",
+          "apply_on_calls",
+          "probability",
+          "type",
+          "injected_text"
+        ],
+        "title": "PromptInjectionFault",
+        "type": "object"
+      },
+      "QueueItem": {
+        "additionalProperties": false,
+        "properties": {
+          "automated_verdict": {
+            "$ref": "#/components/schemas/Verdict"
+          },
+          "blind": {
+            "description": "Reviewers should not see the automated verdict.",
+            "title": "Blind",
+            "type": "boolean"
+          },
+          "case_id": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Case Id",
+            "type": "string"
+          },
+          "current_reviewers": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Current Reviewers",
+            "type": "array"
+          },
+          "evaluator_version": {
+            "title": "Evaluator Version",
+            "type": "string"
+          },
+          "priority": {
+            "description": "0 = most urgent (first reason's rank).",
+            "minimum": 0.0,
+            "title": "Priority",
+            "type": "integer"
+          },
+          "reasons": {
+            "items": {
+              "$ref": "#/components/schemas/QueueReason"
+            },
+            "minItems": 1,
+            "title": "Reasons",
+            "type": "array"
+          },
+          "required_reviews": {
+            "exclusiveMinimum": 0.0,
+            "title": "Required Reviews",
+            "type": "integer"
+          },
+          "run_id": {
+            "pattern": "^run_[0-9a-f]{32}$",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "scenario_id": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Scenario Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "case_id",
+          "scenario_id",
+          "evaluator_version",
+          "automated_verdict",
+          "reasons",
+          "priority",
+          "required_reviews",
+          "current_reviewers",
+          "blind"
+        ],
+        "title": "QueueItem",
+        "type": "object"
+      },
+      "QueueReason": {
+        "enum": [
+          "security_sensitive",
+          "disputed",
+          "uncertain",
+          "sampled"
+        ],
+        "title": "QueueReason",
+        "type": "string"
+      },
+      "RateLimitFault": {
+        "additionalProperties": false,
+        "properties": {
+          "apply_on_calls": {
+            "anyOf": [
+              {
+                "items": {
+                  "exclusiveMinimum": 0.0,
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "1-based call numbers of the target tool to affect; null means every call.",
+            "title": "Apply On Calls"
+          },
+          "id": {
+            "description": "Identifier unique within its scenario.",
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "probability": {
+            "default": 1.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Probability",
+            "type": "number"
+          },
+          "retry_after_ms": {
+            "exclusiveMinimum": 0.0,
+            "title": "Retry After Ms",
+            "type": "integer"
+          },
+          "target_tool": {
+            "description": "Name of the tool whose calls are affected.",
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Target Tool",
+            "type": "string"
+          },
+          "type": {
+            "const": "rate_limit",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "target_tool",
+          "apply_on_calls",
+          "probability",
+          "type",
+          "retry_after_ms"
+        ],
+        "title": "RateLimitFault",
+        "type": "object"
+      },
+      "RecoveryBehavior": {
+        "description": "What a correct agent does after an injected fault.",
+        "enum": [
+          "retry_succeeded",
+          "failure_reported"
+        ],
+        "title": "RecoveryBehavior",
+        "type": "string"
+      },
+      "RegressionPolicy": {
+        "additionalProperties": false,
+        "properties": {
+          "allow_evaluator_change": {
+            "default": false,
+            "title": "Allow Evaluator Change",
+            "type": "boolean"
+          },
+          "allow_suite_change": {
+            "default": false,
+            "title": "Allow Suite Change",
+            "type": "boolean"
+          },
+          "fail_on_security_violation": {
+            "default": true,
+            "title": "Fail On Security Violation",
+            "type": "boolean"
+          },
+          "fail_on_unauthorized_action": {
+            "default": true,
+            "title": "Fail On Unauthorized Action",
+            "type": "boolean"
+          },
+          "max_cost_per_run_increase": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Cost Per Run Increase"
+          },
+          "max_evaluator_uncertainty_rate": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Evaluator Uncertainty Rate"
+          },
+          "max_latency_p95_increase": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Latency P95 Increase"
+          },
+          "max_newly_failing_cases": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": 0,
+            "title": "Max Newly Failing Cases"
+          },
+          "max_not_comparable_fraction": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Not Comparable Fraction"
+          },
+          "max_success_rate_drop": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": 0.0,
+            "title": "Max Success Rate Drop"
+          },
+          "require_significance_for_success_drop": {
+            "default": false,
+            "title": "Require Significance For Success Drop",
+            "type": "boolean"
+          },
+          "unavailable_metric": {
+            "default": "warn",
+            "enum": [
+              "fail",
+              "warn"
+            ],
+            "title": "Unavailable Metric",
+            "type": "string"
+          }
+        },
+        "required": [
+          "max_success_rate_drop",
+          "require_significance_for_success_drop",
+          "max_newly_failing_cases",
+          "fail_on_unauthorized_action",
+          "fail_on_security_violation",
+          "max_evaluator_uncertainty_rate",
+          "max_not_comparable_fraction",
+          "allow_suite_change",
+          "allow_evaluator_change",
+          "max_latency_p95_increase",
+          "max_cost_per_run_increase",
+          "unavailable_metric"
+        ],
+        "title": "RegressionPolicy",
+        "type": "object"
+      },
+      "RejectedSuggestion": {
+        "additionalProperties": false,
+        "properties": {
+          "content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content"
+          },
+          "reason": {
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "content"
+        ],
+        "title": "RejectedSuggestion",
+        "type": "object"
+      },
+      "RequiredFactsCriterion": {
+        "additionalProperties": false,
+        "description": "The answer states the listed facts (all of them, or at least ``min_present``).",
+        "properties": {
+          "description": {
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "facts": {
+            "items": {
+              "$ref": "#/components/schemas/TextMatcher"
+            },
+            "minItems": 1,
+            "title": "Facts",
+            "type": "array"
+          },
+          "id": {
+            "description": "Identifier unique within its expectation.",
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "min_present": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "null means all facts.",
+            "title": "Min Present"
+          },
+          "required": {
+            "default": false,
+            "description": "If true, the run fails when this criterion fails.",
+            "title": "Required",
+            "type": "boolean"
+          },
+          "type": {
+            "const": "required_facts",
+            "title": "Type",
+            "type": "string"
+          },
+          "weight": {
+            "default": 1.0,
+            "description": "Relative weight in the score.",
+            "exclusiveMinimum": 0.0,
+            "title": "Weight",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "weight",
+          "required",
+          "type",
+          "facts",
+          "min_present"
+        ],
+        "title": "RequiredFactsCriterion",
+        "type": "object"
+      },
+      "RequiredToolCall": {
+        "additionalProperties": false,
+        "properties": {
+          "arguments": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            },
+            "description": "Arguments that must match exactly (a subset).",
+            "title": "Arguments",
+            "type": "object"
+          },
+          "min_count": {
+            "default": 1,
+            "exclusiveMinimum": 0.0,
+            "title": "Min Count",
+            "type": "integer"
+          },
+          "must_succeed": {
+            "default": true,
+            "title": "Must Succeed",
+            "type": "boolean"
+          },
+          "tool_name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Tool Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tool_name",
+          "arguments",
+          "must_succeed",
+          "min_count"
+        ],
+        "title": "RequiredToolCall",
+        "type": "object"
+      },
+      "ReviewCorrection": {
+        "properties": {
+          "categories": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/CategoryVerdict"
+            },
+            "propertyNames": {
+              "$ref": "#/components/schemas/FailureLabel"
+            },
+            "title": "Categories",
+            "type": "object"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/ReviewEvidence-Input"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "label": {
+            "$ref": "#/components/schemas/ReviewLabel"
+          },
+          "rationale": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rationale"
+          },
+          "reason": {
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "reason"
+        ],
+        "title": "ReviewCorrection",
+        "type": "object"
+      },
+      "ReviewEvidence-Input": {
+        "additionalProperties": false,
+        "description": "What the reviewer relied on: a trace event and/or a note, optionally a verbatim quote.",
+        "properties": {
+          "event_id": {
+            "anyOf": [
+              {
+                "pattern": "^evt_[0-9a-f]{32}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Id"
+          },
+          "excerpt": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Excerpt"
+          },
+          "note": {
+            "minLength": 1,
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "note"
+        ],
+        "title": "ReviewEvidence",
+        "type": "object"
+      },
+      "ReviewEvidence-Output": {
+        "additionalProperties": false,
+        "description": "What the reviewer relied on: a trace event and/or a note, optionally a verbatim quote.",
+        "properties": {
+          "event_id": {
+            "anyOf": [
+              {
+                "pattern": "^evt_[0-9a-f]{32}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Id"
+          },
+          "excerpt": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Excerpt"
+          },
+          "note": {
+            "minLength": 1,
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "event_id",
+          "note",
+          "excerpt"
+        ],
+        "title": "ReviewEvidence",
+        "type": "object"
+      },
+      "ReviewLabel": {
+        "enum": [
+          "pass",
+          "fail",
+          "ambiguous",
+          "insufficiently_specified"
+        ],
+        "title": "ReviewLabel",
+        "type": "string"
+      },
+      "ReviewSubmission": {
+        "properties": {
+          "blind": {
+            "title": "Blind",
+            "type": "boolean"
+          },
+          "categories": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/CategoryVerdict"
+            },
+            "propertyNames": {
+              "$ref": "#/components/schemas/FailureLabel"
+            },
+            "title": "Categories",
+            "type": "object"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/ReviewEvidence-Input"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "label": {
+            "$ref": "#/components/schemas/ReviewLabel"
+          },
+          "rationale": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rationale"
+          },
+          "reviewer": {
+            "minLength": 1,
+            "title": "Reviewer",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "reviewer",
+          "blind"
+        ],
+        "title": "ReviewSubmission",
+        "type": "object"
+      },
+      "ReviewerPairAgreement": {
+        "additionalProperties": false,
+        "properties": {
+          "agreement": {
+            "$ref": "#/components/schemas/Estimate"
+          },
+          "both_definite": {
+            "minimum": 0.0,
+            "title": "Both Definite",
+            "type": "integer"
+          },
+          "both_reviewed": {
+            "minimum": 0.0,
+            "title": "Both Reviewed",
+            "type": "integer"
+          },
+          "disagreements": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Disagreements",
+            "type": "array"
+          },
+          "kappa": {
+            "$ref": "#/components/schemas/Estimate"
+          },
+          "one_or_both_not_definite": {
+            "minimum": 0.0,
+            "title": "One Or Both Not Definite",
+            "type": "integer"
+          },
+          "reviewer_a": {
+            "minLength": 1,
+            "title": "Reviewer A",
+            "type": "string"
+          },
+          "reviewer_b": {
+            "minLength": 1,
+            "title": "Reviewer B",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reviewer_a",
+          "reviewer_b",
+          "both_reviewed",
+          "both_definite",
+          "one_or_both_not_definite",
+          "agreement",
+          "kappa",
+          "disagreements"
+        ],
+        "title": "ReviewerPairAgreement",
+        "type": "object"
+      },
+      "RubricCriterion": {
+        "additionalProperties": false,
+        "description": "Graded by a judge (e.g. an LLM) against the rubric. Without a judge, or when the\njudge is unreliable, the criterion is inconclusive rather than passed or failed.",
+        "properties": {
+          "description": {
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "dimensions": {
+            "items": {
+              "$ref": "#/components/schemas/RubricDimension"
+            },
+            "minItems": 1,
+            "title": "Dimensions",
+            "type": "array"
+          },
+          "guidance": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Extra notes for the judge.",
+            "title": "Guidance"
+          },
+          "id": {
+            "description": "Identifier unique within its expectation.",
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "min_confidence": {
+            "default": 0.5,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Min Confidence",
+            "type": "number"
+          },
+          "pass_score": {
+            "description": "Normalised score (0..1, mean over dimensions) to pass.",
+            "exclusiveMinimum": 0.0,
+            "maximum": 1.0,
+            "title": "Pass Score",
+            "type": "number"
+          },
+          "required": {
+            "default": false,
+            "description": "If true, the run fails when this criterion fails.",
+            "title": "Required",
+            "type": "boolean"
+          },
+          "type": {
+            "const": "rubric",
+            "title": "Type",
+            "type": "string"
+          },
+          "weight": {
+            "default": 1.0,
+            "description": "Relative weight in the score.",
+            "exclusiveMinimum": 0.0,
+            "title": "Weight",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "weight",
+          "required",
+          "type",
+          "dimensions",
+          "pass_score",
+          "min_confidence",
+          "guidance"
+        ],
+        "title": "RubricCriterion",
+        "type": "object"
+      },
+      "RubricDimension": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "levels": {
+            "items": {
+              "$ref": "#/components/schemas/RubricLevel"
+            },
+            "minItems": 2,
+            "title": "Levels",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "levels"
+        ],
+        "title": "RubricDimension",
+        "type": "object"
+      },
+      "RubricLevel": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "score": {
+            "minimum": 0.0,
+            "title": "Score",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "score",
+          "description"
+        ],
+        "title": "RubricLevel",
+        "type": "object"
+      },
+      "RuleResult": {
+        "additionalProperties": false,
+        "properties": {
+          "hard": {
+            "default": false,
+            "description": "Security hard failure.",
+            "title": "Hard",
+            "type": "boolean"
+          },
+          "message": {
+            "minLength": 1,
+            "title": "Message",
+            "type": "string"
+          },
+          "rule": {
+            "minLength": 1,
+            "title": "Rule",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RuleStatus"
+          }
+        },
+        "required": [
+          "rule",
+          "status",
+          "message",
+          "hard"
+        ],
+        "title": "RuleResult",
+        "type": "object"
+      },
+      "RuleStatus": {
+        "enum": [
+          "passed",
+          "failed",
+          "warning",
+          "unavailable",
+          "disabled"
+        ],
+        "title": "RuleStatus",
+        "type": "string"
+      },
+      "RunDetail": {
+        "properties": {
+          "agent_version": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgentVersion"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "declared_outcome": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgentOutcome"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "diagnosis": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Diagnosis"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "diagnosis_unavailable_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Diagnosis Unavailable Reason"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message"
+          },
+          "evaluation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CaseEvaluation"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "evaluator_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evaluator Version"
+          },
+          "final_answer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Answer"
+          },
+          "run": {
+            "$ref": "#/components/schemas/RunSummary"
+          },
+          "termination_reason": {
+            "$ref": "#/components/schemas/TerminationReason"
+          },
+          "trace": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CollectedTrace"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "trace_unavailable_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trace Unavailable Reason"
+          }
+        },
+        "required": [
+          "run",
+          "termination_reason",
+          "error_message",
+          "declared_outcome",
+          "final_answer",
+          "agent_version",
+          "evaluator_version",
+          "evaluation",
+          "trace",
+          "trace_unavailable_reason",
+          "diagnosis",
+          "diagnosis_unavailable_reason"
+        ],
+        "title": "RunDetail",
+        "type": "object"
+      },
+      "RunReviews": {
+        "properties": {
+          "current": {
+            "description": "Each reviewer's latest record.",
+            "items": {
+              "$ref": "#/components/schemas/HumanReview"
+            },
+            "title": "Current",
+            "type": "array"
+          },
+          "evaluator_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evaluator Version"
+          },
+          "records": {
+            "description": "Every record, oldest first.",
+            "items": {
+              "$ref": "#/components/schemas/HumanReview"
+            },
+            "title": "Records",
+            "type": "array"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "evaluator_version",
+          "records",
+          "current"
+        ],
+        "title": "RunReviews",
+        "type": "object"
+      },
+      "RunStatus": {
+        "description": "Execution status of a single run.\n\nThis describes whether the run *executed*, not whether the agent succeeded at the task;\ntask success is recorded in an ``EvaluationResult``. ``ERRORED`` means the harness,\nconfiguration, or agent implementation failed (an exception, not a wrong answer).\n``LIMIT_EXCEEDED`` means the run was stopped for exceeding its step or tool-call limit;\n``TIMED_OUT`` means it exceeded its execution deadline.",
+        "enum": [
+          "queued",
+          "running",
+          "completed",
+          "errored",
+          "timed_out",
+          "limit_exceeded",
+          "cancelled"
+        ],
+        "title": "RunStatus",
+        "type": "string"
+      },
+      "RunSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "case_id": {
+            "title": "Case Id",
+            "type": "string"
+          },
+          "duration_seconds": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Seconds"
+          },
+          "error_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Type"
+          },
+          "experiment_id": {
+            "title": "Experiment Id",
+            "type": "string"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "labels": {
+            "items": {
+              "$ref": "#/components/schemas/FailureLabel"
+            },
+            "title": "Labels",
+            "type": "array"
+          },
+          "repetition": {
+            "title": "Repetition",
+            "type": "integer"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "scenario_id": {
+            "title": "Scenario Id",
+            "type": "string"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RunStatus"
+          },
+          "verdict": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Verdict"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "run_id",
+          "experiment_id",
+          "case_id",
+          "scenario_id",
+          "repetition",
+          "status",
+          "verdict",
+          "score",
+          "labels",
+          "duration_seconds",
+          "finished_at",
+          "error_type"
+        ],
+        "title": "RunSummary",
+        "type": "object"
+      },
+      "SampleSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "ambiguous": {
+            "minimum": 0.0,
+            "title": "Ambiguous",
+            "type": "integer"
+          },
+          "automated_inconclusive": {
+            "description": "Definite-reference runs where the evaluator abstained (inconclusive).",
+            "minimum": 0.0,
+            "title": "Automated Inconclusive",
+            "type": "integer"
+          },
+          "compared": {
+            "description": "Runs in the automated-vs-human matrix.",
+            "minimum": 0.0,
+            "title": "Compared",
+            "type": "integer"
+          },
+          "corrections": {
+            "minimum": 0.0,
+            "title": "Corrections",
+            "type": "integer"
+          },
+          "definite": {
+            "minimum": 0.0,
+            "title": "Definite",
+            "type": "integer"
+          },
+          "disputed": {
+            "minimum": 0.0,
+            "title": "Disputed",
+            "type": "integer"
+          },
+          "excluded_not_blind": {
+            "minimum": 0.0,
+            "title": "Excluded Not Blind",
+            "type": "integer"
+          },
+          "insufficiently_specified": {
+            "minimum": 0.0,
+            "title": "Insufficiently Specified",
+            "type": "integer"
+          },
+          "missing_evaluation": {
+            "minimum": 0.0,
+            "title": "Missing Evaluation",
+            "type": "integer"
+          },
+          "reviewed_runs": {
+            "description": "Runs with at least one current review.",
+            "minimum": 0.0,
+            "title": "Reviewed Runs",
+            "type": "integer"
+          },
+          "reviewers": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reviewers",
+            "type": "array"
+          },
+          "reviews": {
+            "description": "All review records, including corrections.",
+            "minimum": 0.0,
+            "title": "Reviews",
+            "type": "integer"
+          },
+          "synthetic_reviews": {
+            "minimum": 0.0,
+            "title": "Synthetic Reviews",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "reviewed_runs",
+          "reviews",
+          "corrections",
+          "reviewers",
+          "definite",
+          "disputed",
+          "ambiguous",
+          "insufficiently_specified",
+          "automated_inconclusive",
+          "excluded_not_blind",
+          "missing_evaluation",
+          "compared",
+          "synthetic_reviews"
+        ],
+        "title": "SampleSummary",
+        "type": "object"
+      },
+      "Scenario": {
+        "additionalProperties": false,
+        "properties": {
+          "case_id": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Case Id",
+            "type": "string"
+          },
+          "description": {
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "expectation_override": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Expectation"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Replaces the case expectation for this scenario (fault-injected only)."
+          },
+          "faults": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "empty_result": "#/components/schemas/EmptyResultFault",
+                  "incomplete_result": "#/components/schemas/IncompleteResultFault",
+                  "incorrect_output": "#/components/schemas/IncorrectOutputFault",
+                  "latency": "#/components/schemas/LatencyFault",
+                  "malformed_output": "#/components/schemas/MalformedOutputFault",
+                  "prompt_injection": "#/components/schemas/PromptInjectionFault",
+                  "rate_limit": "#/components/schemas/RateLimitFault",
+                  "tool_error": "#/components/schemas/ToolErrorFault",
+                  "tool_timeout": "#/components/schemas/ToolTimeoutFault"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/ToolTimeoutFault"
+                },
+                {
+                  "$ref": "#/components/schemas/ToolErrorFault"
+                },
+                {
+                  "$ref": "#/components/schemas/MalformedOutputFault"
+                },
+                {
+                  "$ref": "#/components/schemas/EmptyResultFault"
+                },
+                {
+                  "$ref": "#/components/schemas/IncompleteResultFault"
+                },
+                {
+                  "$ref": "#/components/schemas/IncorrectOutputFault"
+                },
+                {
+                  "$ref": "#/components/schemas/LatencyFault"
+                },
+                {
+                  "$ref": "#/components/schemas/RateLimitFault"
+                },
+                {
+                  "$ref": "#/components/schemas/PromptInjectionFault"
+                }
+              ]
+            },
+            "title": "Faults",
+            "type": "array"
+          },
+          "id": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/ScenarioKind"
+          }
+        },
+        "required": [
+          "id",
+          "case_id",
+          "kind",
+          "description",
+          "faults",
+          "expectation_override"
+        ],
+        "title": "Scenario",
+        "type": "object"
+      },
+      "ScenarioKind": {
+        "description": "Whether a scenario runs the case unmodified or with injected faults.",
+        "enum": [
+          "baseline",
+          "fault_injected"
+        ],
+        "title": "ScenarioKind",
+        "type": "string"
+      },
+      "ScoringPolicy": {
+        "additionalProperties": false,
+        "description": "Score = sum(weight of passed criteria) / sum(all weights). A run passes when every\nrequired criterion passes and the score is at least ``pass_threshold``.",
+        "properties": {
+          "pass_threshold": {
+            "default": 1.0,
+            "exclusiveMinimum": 0.0,
+            "maximum": 1.0,
+            "title": "Pass Threshold",
+            "type": "number"
+          }
+        },
+        "required": [
+          "pass_threshold"
+        ],
+        "title": "ScoringPolicy",
+        "type": "object"
+      },
+      "SourceDocument": {
+        "additionalProperties": false,
+        "description": "A document provided to the agent as part of the task.",
+        "properties": {
+          "content": {
+            "minLength": 1,
+            "title": "Content",
+            "type": "string"
+          },
+          "id": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "title": {
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "content"
+        ],
+        "title": "SourceDocument",
+        "type": "object"
+      },
+      "StructuredOutputCriterion": {
+        "additionalProperties": false,
+        "description": "The answer contains JSON that is valid against ``json_schema`` (Draft 2020-12).",
+        "properties": {
+          "answer_format": {
+            "$ref": "#/components/schemas/AnswerFormat",
+            "default": "whole"
+          },
+          "description": {
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "description": "Identifier unique within its expectation.",
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "json_schema": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            },
+            "title": "Json Schema",
+            "type": "object"
+          },
+          "required": {
+            "default": false,
+            "description": "If true, the run fails when this criterion fails.",
+            "title": "Required",
+            "type": "boolean"
+          },
+          "type": {
+            "const": "structured_output",
+            "title": "Type",
+            "type": "string"
+          },
+          "weight": {
+            "default": 1.0,
+            "description": "Relative weight in the score.",
+            "exclusiveMinimum": 0.0,
+            "title": "Weight",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "weight",
+          "required",
+          "type",
+          "json_schema",
+          "answer_format"
+        ],
+        "title": "StructuredOutputCriterion",
+        "type": "object"
+      },
+      "SuiteSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "case_count": {
+            "title": "Case Count",
+            "type": "integer"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "registered_at": {
+            "format": "date-time",
+            "title": "Registered At",
+            "type": "string"
+          },
+          "scenario_count": {
+            "title": "Scenario Count",
+            "type": "integer"
+          },
+          "synthetic": {
+            "title": "Synthetic",
+            "type": "boolean"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "name",
+          "description",
+          "synthetic",
+          "case_count",
+          "scenario_count",
+          "registered_at"
+        ],
+        "title": "SuiteSummary",
+        "type": "object"
+      },
+      "SupportStrength": {
+        "enum": [
+          "direct",
+          "circumstantial",
+          "speculative"
+        ],
+        "title": "SupportStrength",
+        "type": "string"
+      },
+      "TaskInputs": {
+        "additionalProperties": false,
+        "properties": {
+          "available_tools": {
+            "items": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+              "type": "string"
+            },
+            "title": "Available Tools",
+            "type": "array"
+          },
+          "documents": {
+            "items": {
+              "$ref": "#/components/schemas/SourceDocument"
+            },
+            "title": "Documents",
+            "type": "array"
+          },
+          "prompt": {
+            "description": "The instruction given to the agent.",
+            "minLength": 1,
+            "title": "Prompt",
+            "type": "string"
+          },
+          "variables": {
+            "description": "Named scalar parameters referenced by the prompt.",
+            "patternProperties": {
+              "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "boolean"
+                  }
+                ]
+              }
+            },
+            "propertyNames": {
+              "maxLength": 100,
+              "minLength": 1
+            },
+            "title": "Variables",
+            "type": "object"
+          }
+        },
+        "required": [
+          "prompt",
+          "documents",
+          "available_tools",
+          "variables"
+        ],
+        "title": "TaskInputs",
+        "type": "object"
+      },
+      "TerminationReason": {
+        "enum": [
+          "completed",
+          "limit_exceeded",
+          "deadline_exceeded",
+          "agent_error"
+        ],
+        "title": "TerminationReason",
+        "type": "string"
+      },
+      "TextMatcher": {
+        "additionalProperties": false,
+        "description": "Matches when any phrase (case-insensitive substring) or regex pattern\n(case-insensitive ``re.search``) occurs in the text.",
+        "properties": {
+          "description": {
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "patterns": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "title": "Patterns",
+            "type": "array"
+          },
+          "phrases": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "title": "Phrases",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "phrases",
+          "patterns"
+        ],
+        "title": "TextMatcher",
+        "type": "object"
+      },
+      "ToolCallCountCriterion": {
+        "additionalProperties": false,
+        "description": "The named tool was called between ``min_calls`` and ``max_calls`` times (inclusive).",
+        "properties": {
+          "description": {
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "description": "Identifier unique within its expectation.",
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "max_calls": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Calls"
+          },
+          "min_calls": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Min Calls",
+            "type": "integer"
+          },
+          "required": {
+            "default": false,
+            "description": "If true, the run fails when this criterion fails.",
+            "title": "Required",
+            "type": "boolean"
+          },
+          "tool_name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Tool Name",
+            "type": "string"
+          },
+          "type": {
+            "const": "tool_call_count",
+            "title": "Type",
+            "type": "string"
+          },
+          "weight": {
+            "default": 1.0,
+            "description": "Relative weight in the score.",
+            "exclusiveMinimum": 0.0,
+            "title": "Weight",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "weight",
+          "required",
+          "type",
+          "tool_name",
+          "min_calls",
+          "max_calls"
+        ],
+        "title": "ToolCallCountCriterion",
+        "type": "object"
+      },
+      "ToolCallsRequiredCriterion": {
+        "additionalProperties": false,
+        "description": "Each listed call was made (with matching arguments, successfully if required).",
+        "properties": {
+          "calls": {
+            "items": {
+              "$ref": "#/components/schemas/RequiredToolCall"
+            },
+            "minItems": 1,
+            "title": "Calls",
+            "type": "array"
+          },
+          "description": {
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "description": "Identifier unique within its expectation.",
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "required": {
+            "default": false,
+            "description": "If true, the run fails when this criterion fails.",
+            "title": "Required",
+            "type": "boolean"
+          },
+          "type": {
+            "const": "tool_calls_required",
+            "title": "Type",
+            "type": "string"
+          },
+          "weight": {
+            "default": 1.0,
+            "description": "Relative weight in the score.",
+            "exclusiveMinimum": 0.0,
+            "title": "Weight",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "weight",
+          "required",
+          "type",
+          "calls"
+        ],
+        "title": "ToolCallsRequiredCriterion",
+        "type": "object"
+      },
+      "ToolErrorFault": {
+        "additionalProperties": false,
+        "properties": {
+          "apply_on_calls": {
+            "anyOf": [
+              {
+                "items": {
+                  "exclusiveMinimum": 0.0,
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "1-based call numbers of the target tool to affect; null means every call.",
+            "title": "Apply On Calls"
+          },
+          "error_message": {
+            "minLength": 1,
+            "title": "Error Message",
+            "type": "string"
+          },
+          "id": {
+            "description": "Identifier unique within its scenario.",
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "probability": {
+            "default": 1.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Probability",
+            "type": "number"
+          },
+          "status_code": {
+            "anyOf": [
+              {
+                "maximum": 599.0,
+                "minimum": 400.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status Code"
+          },
+          "target_tool": {
+            "description": "Name of the tool whose calls are affected.",
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Target Tool",
+            "type": "string"
+          },
+          "type": {
+            "const": "tool_error",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "target_tool",
+          "apply_on_calls",
+          "probability",
+          "type",
+          "error_message",
+          "status_code"
+        ],
+        "title": "ToolErrorFault",
+        "type": "object"
+      },
+      "ToolFailureObservation": {
+        "additionalProperties": false,
+        "description": "A tool call that did not succeed, and whether the run later recovered from it.\n\nRecorded for every failed call. A failed call is *not* a failure label by itself: it\nonly counts against the run through criteria (e.g. ``expected_recovery``).",
+        "properties": {
+          "error_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Type"
+          },
+          "event_id": {
+            "pattern": "^evt_[0-9a-f]{32}$",
+            "title": "Event Id",
+            "type": "string"
+          },
+          "fault_ids": {
+            "items": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+              "type": "string"
+            },
+            "title": "Fault Ids",
+            "type": "array"
+          },
+          "recovered": {
+            "title": "Recovered",
+            "type": "boolean"
+          },
+          "recovered_by_event_id": {
+            "anyOf": [
+              {
+                "pattern": "^evt_[0-9a-f]{32}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recovered By Event Id"
+          },
+          "result_event_id": {
+            "pattern": "^evt_[0-9a-f]{32}$",
+            "title": "Result Event Id",
+            "type": "string"
+          },
+          "status": {
+            "minLength": 1,
+            "title": "Status",
+            "type": "string"
+          },
+          "tool_name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Tool Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "event_id",
+          "result_event_id",
+          "tool_name",
+          "status",
+          "error_type",
+          "fault_ids",
+          "recovered",
+          "recovered_by_event_id"
+        ],
+        "title": "ToolFailureObservation",
+        "type": "object"
+      },
+      "ToolTimeoutFault": {
+        "additionalProperties": false,
+        "properties": {
+          "apply_on_calls": {
+            "anyOf": [
+              {
+                "items": {
+                  "exclusiveMinimum": 0.0,
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "1-based call numbers of the target tool to affect; null means every call.",
+            "title": "Apply On Calls"
+          },
+          "id": {
+            "description": "Identifier unique within its scenario.",
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "probability": {
+            "default": 1.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Probability",
+            "type": "number"
+          },
+          "target_tool": {
+            "description": "Name of the tool whose calls are affected.",
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Target Tool",
+            "type": "string"
+          },
+          "timeout_ms": {
+            "exclusiveMinimum": 0.0,
+            "title": "Timeout Ms",
+            "type": "integer"
+          },
+          "type": {
+            "const": "tool_timeout",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "target_tool",
+          "apply_on_calls",
+          "probability",
+          "type",
+          "timeout_ms"
+        ],
+        "title": "ToolTimeoutFault",
+        "type": "object"
+      },
+      "TraceEventRecord": {
+        "additionalProperties": false,
+        "properties": {
+          "agent_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agent Name"
+          },
+          "agent_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agent Version"
+          },
+          "arguments": {
+            "$ref": "#/components/schemas/JsonValue",
+            "description": "Sanitised tool arguments."
+          },
+          "attributes": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            },
+            "title": "Attributes",
+            "type": "object"
+          },
+          "ended_at": {
+            "title": "Ended At",
+            "type": "string"
+          },
+          "error_details": {
+            "$ref": "#/components/schemas/JsonValue"
+          },
+          "error_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Type"
+          },
+          "experiment_id": {
+            "pattern": "^exp_[0-9a-f]{32}$",
+            "title": "Experiment Id",
+            "type": "string"
+          },
+          "fault_id": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "minLength": 1,
+                "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Scenario fault configuration ID.",
+            "title": "Fault Id"
+          },
+          "fault_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FaultType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "id": {
+            "pattern": "^evt_[0-9a-f]{32}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/EventKind"
+          },
+          "model_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Name"
+          },
+          "model_provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Provider"
+          },
+          "parent_id": {
+            "anyOf": [
+              {
+                "pattern": "^evt_[0-9a-f]{32}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Id"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/JsonValue",
+            "description": "Sanitised response, message, or answer content."
+          },
+          "payload_original_bytes": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payload Original Bytes"
+          },
+          "payload_truncated": {
+            "default": false,
+            "title": "Payload Truncated",
+            "type": "boolean"
+          },
+          "run_id": {
+            "pattern": "^run_[0-9a-f]{32}$",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "sequence": {
+            "minimum": 0.0,
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "started_at": {
+            "title": "Started At",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/EventStatus"
+          },
+          "tool_call_id": {
+            "anyOf": [
+              {
+                "pattern": "^tcl_[0-9a-f]{32}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tool Call Id"
+          },
+          "tool_name": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tool Name"
+          }
+        },
+        "required": [
+          "id",
+          "experiment_id",
+          "run_id",
+          "parent_id",
+          "sequence",
+          "kind",
+          "status",
+          "started_at",
+          "ended_at",
+          "tool_name",
+          "tool_call_id",
+          "arguments",
+          "payload",
+          "payload_truncated",
+          "payload_original_bytes",
+          "error_type",
+          "error_details",
+          "agent_name",
+          "agent_version",
+          "model_provider",
+          "model_name",
+          "fault_id",
+          "fault_type",
+          "attributes"
+        ],
+        "title": "TraceEventRecord",
+        "type": "object"
+      },
+      "UnitComparison": {
+        "additionalProperties": false,
+        "properties": {
+          "baseline": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UnitSide"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "candidate": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UnitSide"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "case_id": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Case Id",
+            "type": "string"
+          },
+          "reason": {
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "scenario_id": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "title": "Scenario Id",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/UnitStatus"
+          }
+        },
+        "required": [
+          "case_id",
+          "scenario_id",
+          "status",
+          "baseline",
+          "candidate",
+          "reason"
+        ],
+        "title": "UnitComparison",
+        "type": "object"
+      },
+      "UnitOutcome": {
+        "enum": [
+          "pass",
+          "fail",
+          "inconclusive",
+          "missing"
+        ],
+        "title": "UnitOutcome",
+        "type": "string"
+      },
+      "UnitSide": {
+        "additionalProperties": false,
+        "properties": {
+          "failed": {
+            "minimum": 0.0,
+            "title": "Failed",
+            "type": "integer"
+          },
+          "inconclusive": {
+            "minimum": 0.0,
+            "title": "Inconclusive",
+            "type": "integer"
+          },
+          "missing": {
+            "minimum": 0.0,
+            "title": "Missing",
+            "type": "integer"
+          },
+          "outcome": {
+            "$ref": "#/components/schemas/UnitOutcome"
+          },
+          "passed": {
+            "minimum": 0.0,
+            "title": "Passed",
+            "type": "integer"
+          },
+          "planned": {
+            "minimum": 0.0,
+            "title": "Planned",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "outcome",
+          "planned",
+          "passed",
+          "failed",
+          "inconclusive",
+          "missing"
+        ],
+        "title": "UnitSide",
+        "type": "object"
+      },
+      "UnitStatus": {
+        "enum": [
+          "newly_passing",
+          "newly_failing",
+          "unchanged",
+          "not_comparable"
+        ],
+        "title": "UnitStatus",
+        "type": "string"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      },
+      "Verdict": {
+        "enum": [
+          "passed",
+          "failed",
+          "inconclusive"
+        ],
+        "title": "Verdict",
+        "type": "string"
+      }
+    }
+  },
+  "info": {
+    "title": "AI Reliability Lab API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/comparisons": {
+      "get": {
+        "description": "Compare two stored experiments under the default regression policy.",
+        "operationId": "get_comparison_api_comparisons_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "baseline",
+            "required": true,
+            "schema": {
+              "minLength": 1,
+              "title": "Baseline",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "candidate",
+            "required": true,
+            "schema": {
+              "minLength": 1,
+              "title": "Candidate",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComparisonResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Comparison",
+        "tags": [
+          "dashboard"
+        ]
+      }
+    },
+    "/api/experiments": {
+      "get": {
+        "operationId": "get_experiments_api_experiments_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ExperimentSummary"
+                  },
+                  "title": "Response Get Experiments Api Experiments Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Experiments",
+        "tags": [
+          "dashboard"
+        ]
+      }
+    },
+    "/api/experiments/{experiment_id}": {
+      "get": {
+        "operationId": "get_experiment_api_experiments__experiment_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "experiment_id",
+            "required": true,
+            "schema": {
+              "title": "Experiment Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Experiment",
+        "tags": [
+          "dashboard"
+        ]
+      }
+    },
+    "/api/experiments/{experiment_id}/calibration": {
+      "get": {
+        "operationId": "get_calibration_api_experiments__experiment_id__calibration_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "experiment_id",
+            "required": true,
+            "schema": {
+              "title": "Experiment Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "scope",
+            "required": false,
+            "schema": {
+              "default": "sampled",
+              "enum": [
+                "sampled",
+                "all"
+              ],
+              "title": "Scope",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalibrationReport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Calibration",
+        "tags": [
+          "reviews"
+        ]
+      }
+    },
+    "/api/experiments/{experiment_id}/review-queue": {
+      "get": {
+        "operationId": "get_review_queue_api_experiments__experiment_id__review_queue_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "experiment_id",
+            "required": true,
+            "schema": {
+              "title": "Experiment Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/QueueItem"
+                  },
+                  "title": "Response Get Review Queue Api Experiments  Experiment Id  Review Queue Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Review Queue",
+        "tags": [
+          "reviews"
+        ]
+      }
+    },
+    "/api/experiments/{experiment_id}/runs": {
+      "get": {
+        "operationId": "get_experiment_runs_api_experiments__experiment_id__runs_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "experiment_id",
+            "required": true,
+            "schema": {
+              "title": "Experiment Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "verdict",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Verdict"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Verdict"
+            }
+          },
+          {
+            "in": "query",
+            "name": "label",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/FailureLabel"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Label"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RunSummary"
+                  },
+                  "title": "Response Get Experiment Runs Api Experiments  Experiment Id  Runs Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Experiment Runs",
+        "tags": [
+          "dashboard"
+        ]
+      }
+    },
+    "/api/overview": {
+      "get": {
+        "description": "Counts, the latest completed experiment's metrics, and recent activity.\n\nMetrics are per experiment: runs of different configurations are never pooled.",
+        "operationId": "get_overview_api_overview_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Overview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Overview",
+        "tags": [
+          "dashboard"
+        ]
+      }
+    },
+    "/api/reviews/{review_id}/corrections": {
+      "post": {
+        "operationId": "correct_review_api_reviews__review_id__corrections_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "review_id",
+            "required": true,
+            "schema": {
+              "title": "Review Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewCorrection"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HumanReview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Correct Review",
+        "tags": [
+          "reviews"
+        ]
+      }
+    },
+    "/api/runs/{run_id}": {
+      "get": {
+        "operationId": "get_run_api_runs__run_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Run",
+        "tags": [
+          "dashboard"
+        ]
+      }
+    },
+    "/api/runs/{run_id}/reviews": {
+      "get": {
+        "operationId": "get_run_reviews_api_runs__run_id__reviews_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunReviews"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Run Reviews",
+        "tags": [
+          "reviews"
+        ]
+      },
+      "post": {
+        "operationId": "submit_review_api_runs__run_id__reviews_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewSubmission"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HumanReview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Submit Review",
+        "tags": [
+          "reviews"
+        ]
+      }
+    },
+    "/api/suites": {
+      "get": {
+        "operationId": "get_suites_api_suites_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SuiteSummary"
+                  },
+                  "title": "Response Get Suites Api Suites Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Suites",
+        "tags": [
+          "dashboard"
+        ]
+      }
+    },
+    "/api/suites/{suite_id}/{version}": {
+      "get": {
+        "operationId": "get_suite_api_suites__suite_id___version__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "suite_id",
+            "required": true,
+            "schema": {
+              "title": "Suite Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "title": "Version",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BenchmarkSuite"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Suite",
+        "tags": [
+          "dashboard"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "description": "Report that the process is up and able to serve requests.",
+        "operationId": "get_health_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Health",
+        "tags": [
+          "health"
+        ]
+      }
+    }
+  }
+}

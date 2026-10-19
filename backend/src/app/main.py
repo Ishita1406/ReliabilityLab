@@ -2,7 +2,10 @@
 
 from fastapi import FastAPI
 
+from app.api.dashboard import router as dashboard_router
+from app.api.deps import register_error_handlers
 from app.api.health import router as health_router
+from app.api.reviews import router as reviews_router
 from app.config import get_settings
 
 
@@ -11,6 +14,9 @@ def create_app() -> FastAPI:
     settings = get_settings()
     app = FastAPI(title=settings.service_name)
     app.include_router(health_router)
+    app.include_router(dashboard_router)
+    app.include_router(reviews_router)
+    register_error_handlers(app)
     return app
 
 

@@ -85,6 +85,11 @@ git-ignored.
 
 ## API
 
+The dashboard API lives under `/api` (overview, suites, experiments, runs with traces and
+diagnosis, comparisons, review queue, calibration, and review submission/correction); the
+schema is committed as `backend/schemas/openapi.json` and interactive docs are at `/docs` when
+the backend runs. **There is no authentication**; run it locally only.
+
 `GET /health` returns:
 
 ```json

@@ -1,10 +1,25 @@
+import { Suspense } from "react";
+
+import { OverviewView } from "@/components/overview-view";
+import { ErrorState, LoadingState, PageHeader } from "@/components/ui";
+import { api } from "@/lib/api/client";
+
+async function OverviewData() {
+  const result = await api.overview();
+  if (!result.ok) return <ErrorState error={result.error} />;
+  return <OverviewView data={result.data} />;
+}
+
 export default function HomePage() {
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center gap-4 px-6 py-24">
-      <h1 className="text-3xl font-semibold tracking-tight">AI Reliability Lab</h1>
-      <p className="text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-        A platform for testing how reliably AI agents behave.
-      </p>
-    </main>
+    <>
+      <PageHeader
+        title="AI Reliability Lab"
+        description="How reliably agents complete benchmark tasks under injected faults, from stored experiments."
+      />
+      <Suspense fallback={<LoadingState label="Loading overview…" />}>
+        <OverviewData />
+      </Suspense>
+    </>
   );
 }

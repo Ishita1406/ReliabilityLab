@@ -156,6 +156,19 @@ uv run python -m app.review.demo imbalanced   # kappa paradox example
 APP_DATABASE_URL=... uv run python -m app.review.report EXPERIMENT_ID [--scope all]
 ```
 
+## Dashboard API
+
+`/api/...` endpoints (FastAPI routers in `src/app/api/`) serve the Next.js dashboard from
+persisted data. There is **no authentication**: anyone who can reach the server can read data
+and submit reviews. The OpenAPI schema is committed as `schemas/openapi.json` (the frontend
+generates its types from it); regenerate with `uv run python -m app.api.openapi_export`
+(`--check` fails if stale; also enforced by `tests/test_openapi.py`).
+
+```bash
+uv run python -m app.seed_demo                 # DEMO data: synthetic suite, real runs, labelled [demo]
+uv run python scripts/prepare_e2e_db.py        # drop + recreate + seed reliabilitylab_e2e (e2e only)
+```
+
 ## Database (PostgreSQL)
 
 Persistence uses PostgreSQL with SQLAlchemy 2.x and Alembic. Start the local database and
@@ -204,6 +217,8 @@ src/app/
   evaluation/           # evaluation engine, checks, LLM judge (Groq), diagnosis, demo CLI
   experiments/          # snapshots, executor, metrics, comparison, regression policy, CLIs
   review/               # human review records, queue, agreement metrics, fixtures, CLIs
+  api/                  # FastAPI routers: health, dashboard read API, reviews, OpenAPI export
+  seed_demo.py          # labelled demo data for local development and e2e tests
 migrations/             # Alembic environment and revisions
 schemas/                # generated JSON Schema files (committed)
 tests/                  # pytest suite (no network, no external services)

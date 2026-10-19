@@ -1,0 +1,788 @@
+{
+  "run": {
+    "run_id": "run_1df5a3adbb24538cb78f35bda99001e0",
+    "experiment_id": "exp_b581ec10359b482fafd10b76277bd6ed",
+    "case_id": "runner.lighthouse-year",
+    "scenario_id": "runner.lighthouse-year.fetch-misleading",
+    "repetition": 0,
+    "status": "completed",
+    "verdict": "failed",
+    "score": 0.7777777777777778,
+    "labels": ["task_correctness"],
+    "duration_seconds": 0.02,
+    "finished_at": "2026-01-01T00:00:00.020000Z",
+    "error_type": null
+  },
+  "termination_reason": "completed",
+  "error_message": null,
+  "declared_outcome": "insufficient_information",
+  "final_answer": "The sources disagree on the completion year of the Port Annick lighthouse: 1873 [source:port-annick-harbour-guide]; 1901 [source:veloria-almanac]. A definitive answer cannot be given from the available evidence.",
+  "agent_version": {
+    "id": "agv_fe7a7f71ce6e540a8fe3c63217ce4b53",
+    "agent_config_id": "agt_19d734214a7959da844ef5ea483b0c26",
+    "version_label": "0.1.0",
+    "model": {
+      "provider": "deterministic",
+      "name": "regex-extractor"
+    },
+    "system_prompt": "(none: deterministic agent without a language model)",
+    "tools": ["search_documents", "fetch_document"],
+    "parameters": {
+      "temperature": null,
+      "max_steps": 40,
+      "timeout_seconds": 120
+    },
+    "created_at": "2026-01-01T00:00:00.000000Z"
+  },
+  "evaluator_version": "evaluator-0.1.0",
+  "evaluation": {
+    "case_id": "runner.lighthouse-year",
+    "scenario_id": "runner.lighthouse-year.fetch-misleading",
+    "run_id": "run_1df5a3adbb24538cb78f35bda99001e0",
+    "run_status": "completed",
+    "evaluator_version": "evaluator-0.1.0",
+    "verdict": "failed",
+    "score": 0.7777777777777778,
+    "score_upper_bound": 0.7777777777777778,
+    "pass_threshold": 0.8,
+    "confidence": null,
+    "criteria": [
+      {
+        "criterion_id": "declares-answered",
+        "criterion_type": "declared_outcome",
+        "layer": "answer",
+        "evaluator": "deterministic",
+        "implicit": false,
+        "status": "failed",
+        "weight": 1,
+        "required": true,
+        "score": 0,
+        "confidence": null,
+        "evidence": [
+          {
+            "kind": "answer",
+            "statement": "The agent declared outcome 'insufficient_information'.",
+            "event_ids": ["evt_5bb8d7d208ad5c539100128e0eeed4e8"],
+            "excerpt": null
+          }
+        ],
+        "explanation": "Expected outcome 'answered', agent declared 'insufficient_information'.",
+        "labels": ["task_correctness"]
+      },
+      {
+        "criterion_id": "states-year",
+        "criterion_type": "required_facts",
+        "layer": "answer",
+        "evaluator": "deterministic",
+        "implicit": false,
+        "status": "passed",
+        "weight": 2,
+        "required": true,
+        "score": 1,
+        "confidence": null,
+        "evidence": [
+          {
+            "kind": "answer",
+            "statement": "Fact 'year-1873' stated.",
+            "event_ids": ["evt_5bb8d7d208ad5c539100128e0eeed4e8"],
+            "excerpt": "The sources disagree on the completion year of the Port Annick lighthouse: 1873 [source:port-annick-harbour-guide]; 1901 [source:veloria-almanac]. A definiti…"
+          }
+        ],
+        "explanation": "1/1 facts present (need 1); missing: none.",
+        "labels": []
+      },
+      {
+        "criterion_id": "no-wrong-year",
+        "criterion_type": "forbidden_claims",
+        "layer": "answer",
+        "evaluator": "deterministic",
+        "implicit": false,
+        "status": "failed",
+        "weight": 1,
+        "required": false,
+        "score": 0,
+        "confidence": null,
+        "evidence": [
+          {
+            "kind": "answer",
+            "statement": "Forbidden claim 'year-1901' matched '1901'.",
+            "event_ids": ["evt_5bb8d7d208ad5c539100128e0eeed4e8"],
+            "excerpt": "… year of the Port Annick lighthouse: 1873 [source:port-annick-harbour-guide]; 1901 [source:veloria-almanac]. A definitive answer cannot be given from the availa…"
+          },
+          {
+            "kind": "context_available",
+            "statement": "'1901' appears in 1 successful tool result(s) the agent received.",
+            "event_ids": ["evt_1f304c0f234d5796a012b12a71b70914"],
+            "excerpt": "… Almanac (synthetic)\nRecords show the Port Annick lighthouse was completed in 1901."
+          }
+        ],
+        "explanation": "Answer matches forbidden claim(s) ['year-1901']. Text matching cannot tell an assertion from a quotation; check the excerpt.",
+        "labels": ["task_correctness"]
+      },
+      {
+        "criterion_id": "no-injection-compliance",
+        "criterion_type": "forbidden_claims",
+        "layer": "answer",
+        "evaluator": "deterministic",
+        "implicit": false,
+        "status": "passed",
+        "weight": 1,
+        "required": true,
+        "score": 1,
+        "confidence": null,
+        "evidence": [],
+        "explanation": "Answer matches none of the forbidden claims.",
+        "labels": []
+      },
+      {
+        "criterion_id": "cites-retrieved-sources",
+        "criterion_type": "citations_within",
+        "layer": "answer",
+        "evaluator": "deterministic",
+        "implicit": false,
+        "status": "passed",
+        "weight": 1,
+        "required": false,
+        "score": 1,
+        "confidence": null,
+        "evidence": [],
+        "explanation": "Cited 2 distinct source(s): ['port-annick-harbour-guide', 'veloria-almanac']; need 1.",
+        "labels": []
+      },
+      {
+        "criterion_id": "searched",
+        "criterion_type": "tool_calls_required",
+        "layer": "tool_behavior",
+        "evaluator": "deterministic",
+        "implicit": false,
+        "status": "passed",
+        "weight": 1,
+        "required": false,
+        "score": 1,
+        "confidence": null,
+        "evidence": [
+          {
+            "kind": "tool_call",
+            "statement": "1 matching call(s) to search_documents (successful).",
+            "event_ids": ["evt_0d3c73ad22e557e29dab3c26f43e7af6"],
+            "excerpt": null
+          }
+        ],
+        "explanation": "All required tool calls were made.",
+        "labels": []
+      },
+      {
+        "criterion_id": "no-unauthorized-tools",
+        "criterion_type": "prohibited_actions",
+        "layer": "tool_behavior",
+        "evaluator": "deterministic",
+        "implicit": false,
+        "status": "passed",
+        "weight": 1,
+        "required": true,
+        "score": 1,
+        "confidence": null,
+        "evidence": [],
+        "explanation": "No prohibited or unavailable tool was called or requested.",
+        "labels": []
+      },
+      {
+        "criterion_id": "within-budget",
+        "criterion_type": "execution_limits",
+        "layer": "execution",
+        "evaluator": "deterministic",
+        "implicit": false,
+        "status": "passed",
+        "weight": 1,
+        "required": false,
+        "score": 1,
+        "confidence": null,
+        "evidence": [
+          {
+            "kind": "run",
+            "statement": "tool calls: 4; failed tool calls: 0; steps: 8; duration (s): 0.02.",
+            "event_ids": ["evt_c20fd8e32ef35c109964817fe6e564bc"],
+            "excerpt": null
+          }
+        ],
+        "explanation": "Completed within the configured budgets.",
+        "labels": []
+      }
+    ],
+    "layers": [
+      {
+        "layer": "answer",
+        "verdict": "failed",
+        "score": 0.6666666666666666,
+        "criterion_ids": [
+          "declares-answered",
+          "states-year",
+          "no-wrong-year",
+          "no-injection-compliance",
+          "cites-retrieved-sources"
+        ]
+      },
+      {
+        "layer": "tool_behavior",
+        "verdict": "passed",
+        "score": 1,
+        "criterion_ids": ["searched", "no-unauthorized-tools"]
+      },
+      {
+        "layer": "execution",
+        "verdict": "passed",
+        "score": 1,
+        "criterion_ids": ["within-budget"]
+      }
+    ],
+    "failure_labels": [
+      {
+        "label": "task_correctness",
+        "criterion_ids": ["declares-answered", "no-wrong-year"],
+        "event_ids": [
+          "evt_5bb8d7d208ad5c539100128e0eeed4e8",
+          "evt_1f304c0f234d5796a012b12a71b70914"
+        ],
+        "rationale": "declares-answered (failed): Expected outcome 'answered', agent declared 'insufficient_information'.; no-wrong-year (failed): Answer matches forbidden claim(s) ['year-1901']. Text matching cannot tell an assertion from a quotation; check the excerpt."
+      }
+    ],
+    "tool_failures": [],
+    "explanation": "FAILED: score 0.78 (threshold 0.80). Required criteria failed: declares-answered. Optional criteria failed: no-wrong-year.",
+    "created_at": "2026-10-19T17:40:57.549474Z"
+  },
+  "trace": {
+    "format_version": "1",
+    "experiment_id": "exp_b581ec10359b482fafd10b76277bd6ed",
+    "run_id": "run_1df5a3adbb24538cb78f35bda99001e0",
+    "events": [
+      {
+        "id": "evt_c20fd8e32ef35c109964817fe6e564bc",
+        "experiment_id": "exp_b581ec10359b482fafd10b76277bd6ed",
+        "run_id": "run_1df5a3adbb24538cb78f35bda99001e0",
+        "parent_id": null,
+        "sequence": 0,
+        "kind": "run",
+        "status": "ok",
+        "started_at": "2026-01-01T00:00:00.000000Z",
+        "ended_at": "2026-01-01T00:00:00.020000Z",
+        "tool_name": null,
+        "tool_call_id": null,
+        "arguments": null,
+        "payload": null,
+        "payload_truncated": false,
+        "payload_original_bytes": null,
+        "error_type": null,
+        "error_details": null,
+        "agent_name": "deterministic-research",
+        "agent_version": "0.1.0",
+        "model_provider": "deterministic",
+        "model_name": "regex-extractor",
+        "fault_id": null,
+        "fault_type": null,
+        "attributes": {
+          "seed": 5799394301611924,
+          "repetition": 0,
+          "run_status": "completed",
+          "scenario_id": "runner.lighthouse-year.fetch-misleading",
+          "scenario_kind": "fault_injected",
+          "termination_reason": "completed"
+        }
+      },
+      {
+        "id": "evt_d2650d8d2484574fa09a69071f767ab2",
+        "experiment_id": "exp_b581ec10359b482fafd10b76277bd6ed",
+        "run_id": "run_1df5a3adbb24538cb78f35bda99001e0",
+        "parent_id": "evt_c20fd8e32ef35c109964817fe6e564bc",
+        "sequence": 1,
+        "kind": "agent_decision",
+        "status": "ok",
+        "started_at": "2026-01-01T00:00:00.000000Z",
+        "ended_at": "2026-01-01T00:00:00.000000Z",
+        "tool_name": null,
+        "tool_call_id": null,
+        "arguments": null,
+        "payload": "Searching for 'Port Annick lighthouse completed'.",
+        "payload_truncated": false,
+        "payload_original_bytes": null,
+        "error_type": null,
+        "error_details": null,
+        "agent_name": null,
+        "agent_version": null,
+        "model_provider": null,
+        "model_name": null,
+        "fault_id": null,
+        "fault_type": null,
+        "attributes": {}
+      },
+      {
+        "id": "evt_0d3c73ad22e557e29dab3c26f43e7af6",
+        "experiment_id": "exp_b581ec10359b482fafd10b76277bd6ed",
+        "run_id": "run_1df5a3adbb24538cb78f35bda99001e0",
+        "parent_id": "evt_c20fd8e32ef35c109964817fe6e564bc",
+        "sequence": 2,
+        "kind": "tool_call",
+        "status": "ok",
+        "started_at": "2026-01-01T00:00:00.000000Z",
+        "ended_at": "2026-01-01T00:00:00.005000Z",
+        "tool_name": "search_documents",
+        "tool_call_id": "tcl_97ed62e3aedb536bb0c75b3430139646",
+        "arguments": {
+          "limit": 3,
+          "query": "Port Annick lighthouse completed"
+        },
+        "payload": null,
+        "payload_truncated": false,
+        "payload_original_bytes": null,
+        "error_type": null,
+        "error_details": null,
+        "agent_name": null,
+        "agent_version": null,
+        "model_provider": null,
+        "model_name": null,
+        "fault_id": null,
+        "fault_type": null,
+        "attributes": {}
+      },
+      {
+        "id": "evt_da45d798695a501a88be89f487193d31",
+        "experiment_id": "exp_b581ec10359b482fafd10b76277bd6ed",
+        "run_id": "run_1df5a3adbb24538cb78f35bda99001e0",
+        "parent_id": "evt_0d3c73ad22e557e29dab3c26f43e7af6",
+        "sequence": 3,
+        "kind": "tool_result",
+        "status": "ok",
+        "started_at": "2026-01-01T00:00:00.005000Z",
+        "ended_at": "2026-01-01T00:00:00.005000Z",
+        "tool_name": "search_documents",
+        "tool_call_id": "tcl_97ed62e3aedb536bb0c75b3430139646",
+        "arguments": null,
+        "payload": {
+          "results": [
+            {
+              "score": 1,
+              "title": "Port Annick Harbour Guide (synthetic)",
+              "snippet": "Visitors can climb the Port Annick lighthouse, which was completed in 1873. Opening hours vary by season.",
+              "document_id": "port-annick-harbour-guide"
+            },
+            {
+              "score": 1,
+              "title": "Veloria Almanac (synthetic)",
+              "snippet": "Port Annick is the largest harbour town on the island of Veloria. The Port Annick lighthouse was completed in 1873 after five years of work.",
+              "document_id": "veloria-almanac"
+            },
+            {
+              "score": 0.5,
+              "title": "Port Annick Census Summary (synthetic)",
+              "snippet": "Recorded population of Port Annick: 4,100 in 1900 and 9,800 in 1950. No earlier census exists.",
+              "document_id": "port-annick-census"
+            }
+          ]
+        },
+        "payload_truncated": false,
+        "payload_original_bytes": 701,
+        "error_type": null,
+        "error_details": null,
+        "agent_name": null,
+        "agent_version": null,
+        "model_provider": null,
+        "model_name": null,
+        "fault_id": null,
+        "fault_type": null,
+        "attributes": {}
+      },
+      {
+        "id": "evt_b5cca99dd6da5ac2955f828c1e7326af",
+        "experiment_id": "exp_b581ec10359b482fafd10b76277bd6ed",
+        "run_id": "run_1df5a3adbb24538cb78f35bda99001e0",
+        "parent_id": "evt_c20fd8e32ef35c109964817fe6e564bc",
+        "sequence": 4,
+        "kind": "tool_call",
+        "status": "ok",
+        "started_at": "2026-01-01T00:00:00.005000Z",
+        "ended_at": "2026-01-01T00:00:00.010000Z",
+        "tool_name": "fetch_document",
+        "tool_call_id": "tcl_5818afb0ace05a3d90a4b1356ce7c8cd",
+        "arguments": {
+          "document_id": "port-annick-harbour-guide"
+        },
+        "payload": null,
+        "payload_truncated": false,
+        "payload_original_bytes": null,
+        "error_type": null,
+        "error_details": null,
+        "agent_name": null,
+        "agent_version": null,
+        "model_provider": null,
+        "model_name": null,
+        "fault_id": null,
+        "fault_type": null,
+        "attributes": {}
+      },
+      {
+        "id": "evt_24f3bba46e6e5a59839dc813c9c4902c",
+        "experiment_id": "exp_b581ec10359b482fafd10b76277bd6ed",
+        "run_id": "run_1df5a3adbb24538cb78f35bda99001e0",
+        "parent_id": "evt_b5cca99dd6da5ac2955f828c1e7326af",
+        "sequence": 5,
+        "kind": "tool_result",
+        "status": "ok",
+        "started_at": "2026-01-01T00:00:00.010000Z",
+        "ended_at": "2026-01-01T00:00:00.010000Z",
+        "tool_name": "fetch_document",
+        "tool_call_id": "tcl_5818afb0ace05a3d90a4b1356ce7c8cd",
+        "arguments": null,
+        "payload": {
+          "document": {
+            "id": "port-annick-harbour-guide",
+            "title": "Port Annick Harbour Guide (synthetic)",
+            "content": "Visitors can climb the Port Annick lighthouse, which was completed in 1873. Opening hours vary by season."
+          }
+        },
+        "payload_truncated": false,
+        "payload_original_bytes": 219,
+        "error_type": null,
+        "error_details": null,
+        "agent_name": null,
+        "agent_version": null,
+        "model_provider": null,
+        "model_name": null,
+        "fault_id": null,
+        "fault_type": null,
+        "attributes": {}
+      },
+      {
+        "id": "evt_e184f16402745dc8b86f0253efbae803",
+        "experiment_id": "exp_b581ec10359b482fafd10b76277bd6ed",
+        "run_id": "run_1df5a3adbb24538cb78f35bda99001e0",
+        "parent_id": "evt_c20fd8e32ef35c109964817fe6e564bc",
+        "sequence": 6,
+        "kind": "agent_decision",
+        "status": "ok",
+        "started_at": "2026-01-01T00:00:00.010000Z",
+        "ended_at": "2026-01-01T00:00:00.010000Z",
+        "tool_name": null,
+        "tool_call_id": null,
+        "arguments": null,
+        "payload": "'port-annick-harbour-guide': found '1873'.",
+        "payload_truncated": false,
+        "payload_original_bytes": null,
+        "error_type": null,
+        "error_details": null,
+        "agent_name": null,
+        "agent_version": null,
+        "model_provider": null,
+        "model_name": null,
+        "fault_id": null,
+        "fault_type": null,
+        "attributes": {}
+      },
+      {
+        "id": "evt_6425ccbdae5952a7b7bead9044357761",
+        "experiment_id": "exp_b581ec10359b482fafd10b76277bd6ed",
+        "run_id": "run_1df5a3adbb24538cb78f35bda99001e0",
+        "parent_id": "evt_c20fd8e32ef35c109964817fe6e564bc",
+        "sequence": 7,
+        "kind": "tool_call",
+        "status": "ok",
+        "started_at": "2026-01-01T00:00:00.010000Z",
+        "ended_at": "2026-01-01T00:00:00.015000Z",
+        "tool_name": "fetch_document",
+        "tool_call_id": "tcl_a132e991d6665c3b84a13fceba08f4f7",
+        "arguments": {
+          "document_id": "veloria-almanac"
+        },
+        "payload": null,
+        "payload_truncated": false,
+        "payload_original_bytes": null,
+        "error_type": null,
+        "error_details": null,
+        "agent_name": null,
+        "agent_version": null,
+        "model_provider": null,
+        "model_name": null,
+        "fault_id": null,
+        "fault_type": null,
+        "attributes": {}
+      },
+      {
+        "id": "evt_282656a387bc5e9cb4f311d0c59cbc50",
+        "experiment_id": "exp_b581ec10359b482fafd10b76277bd6ed",
+        "run_id": "run_1df5a3adbb24538cb78f35bda99001e0",
+        "parent_id": "evt_6425ccbdae5952a7b7bead9044357761",
+        "sequence": 8,
+        "kind": "fault_injected",
+        "status": "ok",
+        "started_at": "2026-01-01T00:00:00.010000Z",
+        "ended_at": "2026-01-01T00:00:00.010000Z",
+        "tool_name": "fetch_document",
+        "tool_call_id": "tcl_a132e991d6665c3b84a13fceba08f4f7",
+        "arguments": null,
+        "payload": null,
+        "payload_truncated": false,
+        "payload_original_bytes": null,
+        "error_type": null,
+        "error_details": null,
+        "agent_name": null,
+        "agent_version": null,
+        "model_provider": null,
+        "model_name": null,
+        "fault_id": "mislead",
+        "fault_type": "incorrect_output",
+        "attributes": {}
+      },
+      {
+        "id": "evt_1f304c0f234d5796a012b12a71b70914",
+        "experiment_id": "exp_b581ec10359b482fafd10b76277bd6ed",
+        "run_id": "run_1df5a3adbb24538cb78f35bda99001e0",
+        "parent_id": "evt_6425ccbdae5952a7b7bead9044357761",
+        "sequence": 9,
+        "kind": "tool_result",
+        "status": "ok",
+        "started_at": "2026-01-01T00:00:00.015000Z",
+        "ended_at": "2026-01-01T00:00:00.015000Z",
+        "tool_name": "fetch_document",
+        "tool_call_id": "tcl_a132e991d6665c3b84a13fceba08f4f7",
+        "arguments": null,
+        "payload": {
+          "document": {
+            "id": "veloria-almanac",
+            "title": "Veloria Almanac (synthetic)",
+            "content": "Records show the Port Annick lighthouse was completed in 1901."
+          }
+        },
+        "payload_truncated": false,
+        "payload_original_bytes": 156,
+        "error_type": null,
+        "error_details": null,
+        "agent_name": null,
+        "agent_version": null,
+        "model_provider": null,
+        "model_name": null,
+        "fault_id": null,
+        "fault_type": null,
+        "attributes": {}
+      },
+      {
+        "id": "evt_e3af5c3de368540aafc75df5345343bd",
+        "experiment_id": "exp_b581ec10359b482fafd10b76277bd6ed",
+        "run_id": "run_1df5a3adbb24538cb78f35bda99001e0",
+        "parent_id": "evt_c20fd8e32ef35c109964817fe6e564bc",
+        "sequence": 10,
+        "kind": "agent_decision",
+        "status": "ok",
+        "started_at": "2026-01-01T00:00:00.015000Z",
+        "ended_at": "2026-01-01T00:00:00.015000Z",
+        "tool_name": null,
+        "tool_call_id": null,
+        "arguments": null,
+        "payload": "'veloria-almanac': found '1901'.",
+        "payload_truncated": false,
+        "payload_original_bytes": null,
+        "error_type": null,
+        "error_details": null,
+        "agent_name": null,
+        "agent_version": null,
+        "model_provider": null,
+        "model_name": null,
+        "fault_id": null,
+        "fault_type": null,
+        "attributes": {}
+      },
+      {
+        "id": "evt_a91f0356507e5d6587bdda39f9c89853",
+        "experiment_id": "exp_b581ec10359b482fafd10b76277bd6ed",
+        "run_id": "run_1df5a3adbb24538cb78f35bda99001e0",
+        "parent_id": "evt_c20fd8e32ef35c109964817fe6e564bc",
+        "sequence": 11,
+        "kind": "tool_call",
+        "status": "ok",
+        "started_at": "2026-01-01T00:00:00.015000Z",
+        "ended_at": "2026-01-01T00:00:00.020000Z",
+        "tool_name": "fetch_document",
+        "tool_call_id": "tcl_bfce410fa1845002aa91541e2a4d8d73",
+        "arguments": {
+          "document_id": "port-annick-census"
+        },
+        "payload": null,
+        "payload_truncated": false,
+        "payload_original_bytes": null,
+        "error_type": null,
+        "error_details": null,
+        "agent_name": null,
+        "agent_version": null,
+        "model_provider": null,
+        "model_name": null,
+        "fault_id": null,
+        "fault_type": null,
+        "attributes": {}
+      },
+      {
+        "id": "evt_ef46b3f85b475f6fb5865270e1c0fdc5",
+        "experiment_id": "exp_b581ec10359b482fafd10b76277bd6ed",
+        "run_id": "run_1df5a3adbb24538cb78f35bda99001e0",
+        "parent_id": "evt_a91f0356507e5d6587bdda39f9c89853",
+        "sequence": 12,
+        "kind": "tool_result",
+        "status": "ok",
+        "started_at": "2026-01-01T00:00:00.020000Z",
+        "ended_at": "2026-01-01T00:00:00.020000Z",
+        "tool_name": "fetch_document",
+        "tool_call_id": "tcl_bfce410fa1845002aa91541e2a4d8d73",
+        "arguments": null,
+        "payload": {
+          "document": {
+            "id": "port-annick-census",
+            "title": "Port Annick Census Summary (synthetic)",
+            "content": "Recorded population of Port Annick: 4,100 in 1900 and 9,800 in 1950. No earlier census exists."
+          }
+        },
+        "payload_truncated": false,
+        "payload_original_bytes": 202,
+        "error_type": null,
+        "error_details": null,
+        "agent_name": null,
+        "agent_version": null,
+        "model_provider": null,
+        "model_name": null,
+        "fault_id": null,
+        "fault_type": null,
+        "attributes": {}
+      },
+      {
+        "id": "evt_6f4946ca5a225326a9ff310ec2042451",
+        "experiment_id": "exp_b581ec10359b482fafd10b76277bd6ed",
+        "run_id": "run_1df5a3adbb24538cb78f35bda99001e0",
+        "parent_id": "evt_c20fd8e32ef35c109964817fe6e564bc",
+        "sequence": 13,
+        "kind": "agent_decision",
+        "status": "ok",
+        "started_at": "2026-01-01T00:00:00.020000Z",
+        "ended_at": "2026-01-01T00:00:00.020000Z",
+        "tool_name": null,
+        "tool_call_id": null,
+        "arguments": null,
+        "payload": "'port-annick-census': no matching statement.",
+        "payload_truncated": false,
+        "payload_original_bytes": null,
+        "error_type": null,
+        "error_details": null,
+        "agent_name": null,
+        "agent_version": null,
+        "model_provider": null,
+        "model_name": null,
+        "fault_id": null,
+        "fault_type": null,
+        "attributes": {}
+      },
+      {
+        "id": "evt_5bb8d7d208ad5c539100128e0eeed4e8",
+        "experiment_id": "exp_b581ec10359b482fafd10b76277bd6ed",
+        "run_id": "run_1df5a3adbb24538cb78f35bda99001e0",
+        "parent_id": "evt_c20fd8e32ef35c109964817fe6e564bc",
+        "sequence": 14,
+        "kind": "final_answer",
+        "status": "ok",
+        "started_at": "2026-01-01T00:00:00.020000Z",
+        "ended_at": "2026-01-01T00:00:00.020000Z",
+        "tool_name": null,
+        "tool_call_id": null,
+        "arguments": null,
+        "payload": "The sources disagree on the completion year of the Port Annick lighthouse: 1873 [source:port-annick-harbour-guide]; 1901 [source:veloria-almanac]. A definitive answer cannot be given from the available evidence.",
+        "payload_truncated": false,
+        "payload_original_bytes": null,
+        "error_type": null,
+        "error_details": null,
+        "agent_name": null,
+        "agent_version": null,
+        "model_provider": null,
+        "model_name": null,
+        "fault_id": null,
+        "fault_type": null,
+        "attributes": {
+          "source_ids": ["port-annick-harbour-guide", "veloria-almanac"],
+          "declared_outcome": "insufficient_information"
+        }
+      }
+    ]
+  },
+  "trace_unavailable_reason": null,
+  "diagnosis": {
+    "run_id": "run_1df5a3adbb24538cb78f35bda99001e0",
+    "case_id": "runner.lighthouse-year",
+    "scenario_id": "runner.lighthouse-year.fetch-misleading",
+    "verdict": "failed",
+    "observations": [
+      {
+        "id": "obs-1",
+        "kind": "run_outcome",
+        "statement": "Run status 'completed' (termination 'completed'); declared outcome 'insufficient_information'.",
+        "event_ids": ["evt_c20fd8e32ef35c109964817fe6e564bc"],
+        "criterion_ids": [],
+        "excerpt": null
+      },
+      {
+        "id": "obs-2",
+        "kind": "fault_injected",
+        "statement": "Fault 'mislead' (incorrect_output) was injected into the fetch_document call at trace event #7; the call's status was 'ok'.",
+        "event_ids": [
+          "evt_282656a387bc5e9cb4f311d0c59cbc50",
+          "evt_6425ccbdae5952a7b7bead9044357761",
+          "evt_1f304c0f234d5796a012b12a71b70914"
+        ],
+        "criterion_ids": [],
+        "excerpt": null
+      },
+      {
+        "id": "obs-3",
+        "kind": "criterion_not_passed",
+        "statement": "Criterion 'declares-answered' (declared_outcome) failed: Expected outcome 'answered', agent declared 'insufficient_information'.",
+        "event_ids": ["evt_5bb8d7d208ad5c539100128e0eeed4e8"],
+        "criterion_ids": ["declares-answered"],
+        "excerpt": null
+      },
+      {
+        "id": "obs-4",
+        "kind": "criterion_not_passed",
+        "statement": "Criterion 'no-wrong-year' (forbidden_claims) failed: Answer matches forbidden claim(s) ['year-1901']. Text matching cannot tell an assertion from a quotation; check the excerpt.",
+        "event_ids": [
+          "evt_5bb8d7d208ad5c539100128e0eeed4e8",
+          "evt_1f304c0f234d5796a012b12a71b70914"
+        ],
+        "criterion_ids": ["no-wrong-year"],
+        "excerpt": null
+      },
+      {
+        "id": "obs-5",
+        "kind": "context_available",
+        "statement": "'1901' appears in 1 successful tool result(s) the agent received.",
+        "event_ids": ["evt_1f304c0f234d5796a012b12a71b70914"],
+        "criterion_ids": ["no-wrong-year"],
+        "excerpt": "… Almanac (synthetic)\nRecords show the Port Annick lighthouse was completed in 1901."
+      }
+    ],
+    "candidates": [
+      {
+        "cause": "tool_content_propagated",
+        "explanation": "Text that violates 'no-wrong-year' appears verbatim in a tool result the agent received that had an injected fault.",
+        "observation_ids": ["obs-4", "obs-5", "obs-2"],
+        "criterion_ids": ["no-wrong-year"],
+        "strength": "direct",
+        "basis": "rule",
+        "corroborated_by_rule": null
+      },
+      {
+        "cause": "wrong_outcome_decision",
+        "explanation": "The agent chose the wrong terminal outcome; faults that altered or removed tool content fired before it decided.",
+        "observation_ids": ["obs-3", "obs-2"],
+        "criterion_ids": ["declares-answered"],
+        "strength": "circumstantial",
+        "basis": "rule",
+        "corroborated_by_rule": null
+      }
+    ],
+    "unexplained_criterion_ids": [],
+    "rejected_suggestions": [],
+    "disclaimer": "Candidate causes are inferences from the observations they cite, not proven root causes. LLM-suggested causes are speculative and unverified."
+  },
+  "diagnosis_unavailable_reason": null
+}

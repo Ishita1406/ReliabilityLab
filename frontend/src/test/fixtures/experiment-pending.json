@@ -1,0 +1,311 @@
+{
+  "experiment": {
+    "id": "exp_68a507e9c7da45c2820ac3732aa8d8db",
+    "name": "[demo] pending (0.1.0)",
+    "description": "DEMO DATA: synthetic benchmark, deterministic agent, seeded by app.seed_demo.",
+    "status": "pending",
+    "suite_id": "evaluation-samples",
+    "suite_version": "1.0.0",
+    "agent_version_id": "agv_fe7a7f71ce6e540a8fe3c63217ce4b53",
+    "agent_version_label": "0.1.0",
+    "agent_model": "deterministic/regex-extractor",
+    "evaluator_version": "evaluator-0.1.0",
+    "repetitions": 1,
+    "seed": 0,
+    "created_at": "2026-10-19T17:40:58.086027Z",
+    "started_at": null,
+    "finished_at": null,
+    "planned_runs": 12,
+    "stored_runs": 0,
+    "evaluated_runs": 0
+  },
+  "configuration": {
+    "format_version": "1",
+    "suite_id": "evaluation-samples",
+    "suite_version": "1.0.0",
+    "suite_sha256": "337d4bc7851a6f8983277388c0b0220eee3dff427eee859fe2f4d4306b6d2747",
+    "scenario_ids": [
+      "runner.lighthouse-year.baseline",
+      "runner.lighthouse-year.search-timeout-once",
+      "runner.lighthouse-year.search-timeout-always",
+      "runner.lighthouse-year.fetch-rate-limited",
+      "runner.lighthouse-year.fetch-temporary-error",
+      "runner.lighthouse-year.search-malformed-once",
+      "runner.lighthouse-year.search-empty",
+      "runner.lighthouse-year.fetch-incomplete",
+      "runner.lighthouse-year.fetch-misleading",
+      "runner.lighthouse-year.fetch-prompt-injection",
+      "runner.lighthouse-year.fetch-latency",
+      "runner.lighthouse-year.search-flaky"
+    ],
+    "scenario_case_ids": {
+      "runner.lighthouse-year.baseline": "runner.lighthouse-year",
+      "runner.lighthouse-year.search-empty": "runner.lighthouse-year",
+      "runner.lighthouse-year.search-flaky": "runner.lighthouse-year",
+      "runner.lighthouse-year.fetch-latency": "runner.lighthouse-year",
+      "runner.lighthouse-year.fetch-incomplete": "runner.lighthouse-year",
+      "runner.lighthouse-year.fetch-misleading": "runner.lighthouse-year",
+      "runner.lighthouse-year.fetch-rate-limited": "runner.lighthouse-year",
+      "runner.lighthouse-year.search-timeout-once": "runner.lighthouse-year",
+      "runner.lighthouse-year.fetch-temporary-error": "runner.lighthouse-year",
+      "runner.lighthouse-year.search-malformed-once": "runner.lighthouse-year",
+      "runner.lighthouse-year.search-timeout-always": "runner.lighthouse-year",
+      "runner.lighthouse-year.fetch-prompt-injection": "runner.lighthouse-year"
+    },
+    "scenario_fingerprints": {
+      "runner.lighthouse-year.baseline": "77be8ef4af6edb41af360500eab2841a87392c6d4fa450f76d4d01e3f564fb5e",
+      "runner.lighthouse-year.search-empty": "2886a2065335b684e8438273109a5f2022f446fe3738f88fd548ffaf04ccddc3",
+      "runner.lighthouse-year.search-flaky": "c6fcfbcab76e010b979ef33fb146c2e7c2098bbf2d643b49a939875aefeb6a3c",
+      "runner.lighthouse-year.fetch-latency": "1460bdbb94dc8692da4100043c6c791dcf5e380d6d0c5d5471d381c931363d73",
+      "runner.lighthouse-year.fetch-incomplete": "362073faf4d2cdf9567a23fe37fc5447a6a6e9fa4de5cd34b6fa75384b1fc8b2",
+      "runner.lighthouse-year.fetch-misleading": "5330a5786d8cf2b0871500c70819bf56309310490dfebeb504f77cdcc9028dd2",
+      "runner.lighthouse-year.fetch-rate-limited": "dc909cd200138cb6396b965e16a7f628988f6ba7783353cf7f90e4ffa0781e62",
+      "runner.lighthouse-year.search-timeout-once": "e8138fbdcbb7c6cb9cdc0952cf402fe88d4ff49a1e3e2afccd7c433e51bcddf5",
+      "runner.lighthouse-year.fetch-temporary-error": "41650ebcba2dd02b7da806f98b252a32e445f3bed8844be2d6d8e266a0d0d9da",
+      "runner.lighthouse-year.search-malformed-once": "5c9e8c6c66c0fa2b79896db6ffe4744aa8327268424546345a2fbcb6694c658d",
+      "runner.lighthouse-year.search-timeout-always": "072c737e02067a99983867b92639bb3a6526ac2f64726ac66874006705191cbb",
+      "runner.lighthouse-year.fetch-prompt-injection": "ae4279e6057bc27b27ee5b98956167c95ec2f1bcc388b746b304411c84b4e8a6"
+    },
+    "agent_version": {
+      "id": "agv_fe7a7f71ce6e540a8fe3c63217ce4b53",
+      "agent_config_id": "agt_19d734214a7959da844ef5ea483b0c26",
+      "version_label": "0.1.0",
+      "model": {
+        "provider": "deterministic",
+        "name": "regex-extractor"
+      },
+      "system_prompt": "(none: deterministic agent without a language model)",
+      "tools": ["search_documents", "fetch_document"],
+      "parameters": {
+        "temperature": null,
+        "max_steps": 40,
+        "timeout_seconds": 120
+      },
+      "created_at": "2026-01-01T00:00:00.000000Z"
+    },
+    "agent_version_sha256": "c680c00baa08f9e5a98312101b57b3d048c878871afe7120ef6519fc5f219516",
+    "agent_implementation": {
+      "name": "deterministic-research",
+      "version": "0.1.0"
+    },
+    "limits": {
+      "max_steps": 40,
+      "max_tool_calls": 12,
+      "deadline_seconds": 120
+    },
+    "repetitions": 1,
+    "seed": 0,
+    "evaluator_version": "evaluator-0.1.0",
+    "runner_version": "0.1.0"
+  },
+  "metrics": {
+    "experiment_id": "exp_68a507e9c7da45c2820ac3732aa8d8db",
+    "planned_runs": 12,
+    "observed_runs": 0,
+    "evaluated_runs": 0,
+    "missing_runs": 12,
+    "task_success_rate": {
+      "value": null,
+      "unit": "ratio",
+      "sample_unit": "runs",
+      "numerator": null,
+      "denominator": 0,
+      "ci_low": null,
+      "ci_high": null,
+      "unavailable_reason": "no evaluated runs"
+    },
+    "failure_rate": {
+      "task_correctness": {
+        "value": null,
+        "unit": "ratio",
+        "sample_unit": "runs",
+        "numerator": null,
+        "denominator": 0,
+        "ci_low": null,
+        "ci_high": null,
+        "unavailable_reason": "no evaluated runs"
+      },
+      "evidence_handling": {
+        "value": null,
+        "unit": "ratio",
+        "sample_unit": "runs",
+        "numerator": null,
+        "denominator": 0,
+        "ci_low": null,
+        "ci_high": null,
+        "unavailable_reason": "no evaluated runs"
+      },
+      "context_retention": {
+        "value": null,
+        "unit": "ratio",
+        "sample_unit": "runs",
+        "numerator": null,
+        "denominator": 0,
+        "ci_low": null,
+        "ci_high": null,
+        "unavailable_reason": "no evaluated runs"
+      },
+      "tool_failure": {
+        "value": null,
+        "unit": "ratio",
+        "sample_unit": "runs",
+        "numerator": null,
+        "denominator": 0,
+        "ci_low": null,
+        "ci_high": null,
+        "unavailable_reason": "no evaluated runs"
+      },
+      "security_violation": {
+        "value": null,
+        "unit": "ratio",
+        "sample_unit": "runs",
+        "numerator": null,
+        "denominator": 0,
+        "ci_low": null,
+        "ci_high": null,
+        "unavailable_reason": "no evaluated runs"
+      },
+      "execution_limit_violation": {
+        "value": null,
+        "unit": "ratio",
+        "sample_unit": "runs",
+        "numerator": null,
+        "denominator": 0,
+        "ci_low": null,
+        "ci_high": null,
+        "unavailable_reason": "no evaluated runs"
+      },
+      "invalid_output": {
+        "value": null,
+        "unit": "ratio",
+        "sample_unit": "runs",
+        "numerator": null,
+        "denominator": 0,
+        "ci_low": null,
+        "ci_high": null,
+        "unavailable_reason": "no evaluated runs"
+      },
+      "run_error": {
+        "value": null,
+        "unit": "ratio",
+        "sample_unit": "runs",
+        "numerator": null,
+        "denominator": 0,
+        "ci_low": null,
+        "ci_high": null,
+        "unavailable_reason": "no evaluated runs"
+      },
+      "evaluator_uncertainty": {
+        "value": null,
+        "unit": "ratio",
+        "sample_unit": "runs",
+        "numerator": null,
+        "denominator": 0,
+        "ci_low": null,
+        "ci_high": null,
+        "unavailable_reason": "no evaluated runs"
+      }
+    },
+    "evaluator_uncertainty_rate": {
+      "value": null,
+      "unit": "ratio",
+      "sample_unit": "runs",
+      "numerator": null,
+      "denominator": 0,
+      "ci_low": null,
+      "ci_high": null,
+      "unavailable_reason": "no evaluated runs"
+    },
+    "fault_recovery_rate": {
+      "value": null,
+      "unit": "ratio",
+      "sample_unit": "criteria",
+      "numerator": null,
+      "denominator": 0,
+      "ci_low": null,
+      "ci_high": null,
+      "unavailable_reason": "no decided expected_recovery criteria (none defined, or no fault fired)"
+    },
+    "tool_failure_recovery_rate": {
+      "value": null,
+      "unit": "ratio",
+      "sample_unit": "tool_calls",
+      "numerator": null,
+      "denominator": 0,
+      "ci_low": null,
+      "ci_high": null,
+      "unavailable_reason": "no tool call failed because of an injected fault"
+    },
+    "unauthorized_action_rate": {
+      "value": null,
+      "unit": "ratio",
+      "sample_unit": "runs",
+      "numerator": null,
+      "denominator": 0,
+      "ci_low": null,
+      "ci_high": null,
+      "unavailable_reason": "no run has a decided prohibited_actions criterion; not measured"
+    },
+    "latency_mean": {
+      "value": null,
+      "unit": "seconds",
+      "sample_unit": "runs",
+      "numerator": null,
+      "denominator": 0,
+      "ci_low": null,
+      "ci_high": null,
+      "unavailable_reason": "no run durations"
+    },
+    "latency_p50": {
+      "value": null,
+      "unit": "seconds",
+      "sample_unit": "runs",
+      "numerator": null,
+      "denominator": 0,
+      "ci_low": null,
+      "ci_high": null,
+      "unavailable_reason": "p50 needs at least 1 runs, have 0"
+    },
+    "latency_p90": {
+      "value": null,
+      "unit": "seconds",
+      "sample_unit": "runs",
+      "numerator": null,
+      "denominator": 0,
+      "ci_low": null,
+      "ci_high": null,
+      "unavailable_reason": "p90 needs at least 10 runs, have 0"
+    },
+    "latency_p95": {
+      "value": null,
+      "unit": "seconds",
+      "sample_unit": "runs",
+      "numerator": null,
+      "denominator": 0,
+      "ci_low": null,
+      "ci_high": null,
+      "unavailable_reason": "p95 needs at least 20 runs, have 0"
+    },
+    "cost_per_run_mean": {
+      "value": null,
+      "unit": "usd",
+      "sample_unit": "runs",
+      "numerator": null,
+      "denominator": 0,
+      "ci_low": null,
+      "ci_high": null,
+      "unavailable_reason": "cost unknown for every run (no runs)"
+    },
+    "cost_total": {
+      "value": null,
+      "unit": "usd",
+      "sample_unit": "runs",
+      "numerator": null,
+      "denominator": 0,
+      "ci_low": null,
+      "ci_high": null,
+      "unavailable_reason": "cost unknown for 0 of 0 run(s)"
+    }
+  },
+  "runs": []
+}

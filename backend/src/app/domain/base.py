@@ -20,7 +20,12 @@ class DomainModel(BaseModel):
       fail, leaving an invalid object behind.)
     """
 
-    model_config = ConfigDict(extra="forbid", frozen=True)
+    # json_schema_serialization_defaults_required: in *response* (serialization) schemas, fields
+    # with defaults are always present, so generated API clients see them as required. Input
+    # and dataset (validation) schemas are unaffected.
+    model_config = ConfigDict(
+        extra="forbid", frozen=True, json_schema_serialization_defaults_required=True
+    )
 
     def updated(self, **changes: object) -> Self:
         """Return a fully re-validated copy with ``changes`` applied together.

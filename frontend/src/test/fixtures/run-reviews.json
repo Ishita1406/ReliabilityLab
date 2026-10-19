@@ -1,0 +1,64 @@
+{
+  "run_id": "run_91fe7a31142b51a88ae5aed0f29ecc49",
+  "evaluator_version": "evaluator-0.1.0",
+  "records": [
+    {
+      "id": "hrv_bb19dcb8bdfa4e65b0cd7c6f097c2cdd",
+      "run_id": "run_91fe7a31142b51a88ae5aed0f29ecc49",
+      "case_id": "runner.lighthouse-year",
+      "scenario_id": "runner.lighthouse-year.baseline",
+      "evaluator_version": "evaluator-0.1.0",
+      "reviewer": "fixture-reviewer",
+      "label": "fail",
+      "categories": {
+        "task_correctness": "present"
+      },
+      "confidence": null,
+      "evidence": [],
+      "rationale": null,
+      "blind": true,
+      "provenance": "human",
+      "supersedes": null,
+      "correction_reason": null,
+      "created_at": "2026-10-19T17:41:46.769740Z"
+    },
+    {
+      "id": "hrv_c52fc0fabb1b488ab036d9372ff6ae05",
+      "run_id": "run_91fe7a31142b51a88ae5aed0f29ecc49",
+      "case_id": "runner.lighthouse-year",
+      "scenario_id": "runner.lighthouse-year.baseline",
+      "evaluator_version": "evaluator-0.1.0",
+      "reviewer": "fixture-reviewer",
+      "label": "pass",
+      "categories": {},
+      "confidence": null,
+      "evidence": [],
+      "rationale": null,
+      "blind": true,
+      "provenance": "human",
+      "supersedes": "hrv_bb19dcb8bdfa4e65b0cd7c6f097c2cdd",
+      "correction_reason": "misread the answer",
+      "created_at": "2026-10-19T17:41:46.789685Z"
+    }
+  ],
+  "current": [
+    {
+      "id": "hrv_c52fc0fabb1b488ab036d9372ff6ae05",
+      "run_id": "run_91fe7a31142b51a88ae5aed0f29ecc49",
+      "case_id": "runner.lighthouse-year",
+      "scenario_id": "runner.lighthouse-year.baseline",
+      "evaluator_version": "evaluator-0.1.0",
+      "reviewer": "fixture-reviewer",
+      "label": "pass",
+      "categories": {},
+      "confidence": null,
+      "evidence": [],
+      "rationale": null,
+      "blind": true,
+      "provenance": "human",
+      "supersedes": "hrv_bb19dcb8bdfa4e65b0cd7c6f097c2cdd",
+      "correction_reason": "misread the answer",
+      "created_at": "2026-10-19T17:41:46.789685Z"
+    }
+  ]
+}
