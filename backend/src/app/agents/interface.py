@@ -30,8 +30,9 @@ from app.domain.enums import AgentOutcome
 from app.domain.ids import RunId, Slug
 from app.runtime.clock import Clock
 from app.runtime.execution import ExecutionLog, ExecutionRecorder, ToolCallStep
+from app.runtime.limits import ExecutionLimits, LimitGuard
 from app.tools.base import Tool
-from app.tools.executor import ToolExecutor
+from app.tools.executor import CallInterceptor, ToolExecutor
 
 
 class AgentTask(DomainModel):
@@ -144,12 +145,15 @@ class AgentEnvironment:
         clock: Clock,
         *,
         call_budget: int | None = None,
+        limits: ExecutionLimits | None = None,
+        interceptor: CallInterceptor | None = None,
     ) -> Self:
-        recorder = ExecutionRecorder(run_id, clock)
+        guard = LimitGuard(limits, clock, clock.now()) if limits is not None else None
+        recorder = ExecutionRecorder(run_id, clock, guard)
         return cls(
             run_id=run_id,
             clock=clock,
-            tools=ToolExecutor(tools, recorder, call_budget=call_budget),
+            tools=ToolExecutor(tools, recorder, call_budget=call_budget, interceptor=interceptor),
             recorder=recorder,
         )
 

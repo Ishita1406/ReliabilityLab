@@ -161,6 +161,7 @@ def test_not_found_is_a_non_retryable_error_returned_to_the_agent() -> None:
         "message": "document 'missing-doc' does not exist",
         "retryable": False,
         "retry_after_ms": None,
+        "http_status": None,
         "field_errors": [],
     }
 

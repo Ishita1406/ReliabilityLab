@@ -110,6 +110,10 @@ class Run(DomainModel):
         )
         if self.status is RunStatus.ERRORED and self.error is None:
             raise ValueError("errored runs must include error details")
-        if self.error is not None and self.status not in {RunStatus.ERRORED, RunStatus.TIMED_OUT}:
+        if self.error is not None and self.status not in {
+            RunStatus.ERRORED,
+            RunStatus.TIMED_OUT,
+            RunStatus.LIMIT_EXCEEDED,
+        }:
             raise ValueError(f"status '{self.status}' must not include error details")
         return self

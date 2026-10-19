@@ -39,6 +39,7 @@ class FaultType(StrEnum):
     TOOL_ERROR = "tool_error"
     MALFORMED_OUTPUT = "malformed_output"
     EMPTY_RESULT = "empty_result"
+    INCOMPLETE_RESULT = "incomplete_result"
     INCORRECT_OUTPUT = "incorrect_output"
     LATENCY = "latency"
     RATE_LIMIT = "rate_limit"
@@ -65,8 +66,10 @@ class RunStatus(StrEnum):
     """Execution status of a single run.
 
     This describes whether the run *executed*, not whether the agent succeeded at the task;
-    task success is recorded in an ``EvaluationResult``. ``ERRORED`` means the harness or
-    infrastructure failed, not the agent.
+    task success is recorded in an ``EvaluationResult``. ``ERRORED`` means the harness,
+    configuration, or agent implementation failed (an exception, not a wrong answer).
+    ``LIMIT_EXCEEDED`` means the run was stopped for exceeding its step or tool-call limit;
+    ``TIMED_OUT`` means it exceeded its execution deadline.
     """
 
     QUEUED = "queued"
@@ -74,6 +77,7 @@ class RunStatus(StrEnum):
     COMPLETED = "completed"
     ERRORED = "errored"
     TIMED_OUT = "timed_out"
+    LIMIT_EXCEEDED = "limit_exceeded"
     CANCELLED = "cancelled"
 
 

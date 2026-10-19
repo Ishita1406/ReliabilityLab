@@ -78,6 +78,22 @@ uv run python -m app.agents.demo tool-timeout            # one fixture
 uv run python -m app.agents.demo --json missing-document # full AgentResult JSON
 ```
 
+## Scenario runner and fault injection
+
+`app.runner.ScenarioRunner` runs one benchmark case + scenario against an agent version under
+explicit `ExecutionLimits` (max steps, max tool calls, deadline) and a seed, and returns a
+`ScenarioRunResult` (run record, effective configuration, termination reason, execution log,
+and the agent output for completed runs only). Scenario faults (`tool_timeout`, `rate_limit`,
+`tool_error`, `malformed_output`, `empty_result`, `incomplete_result`, `incorrect_output`,
+`prompt_injection`, `latency`) are applied by a `FaultInjector` between the executor and the
+unmodified mock tools. See [docs/engineering/04-scenario-runner.md](../docs/engineering/04-scenario-runner.md).
+
+```bash
+uv run python -m app.runner.demo                          # synthetic case under every scenario
+uv run python -m app.runner.demo --seed 3 search-flaky    # seeded probabilistic fault
+uv run python -m app.runner.demo --json fetch-misleading  # full ScenarioRunResult JSON
+```
+
 ## Layout
 
 ```
@@ -87,9 +103,10 @@ src/app/
   api/health.py         # GET /health
   domain/               # Pydantic domain models, enums, IDs, timestamps, schema export
   benchmarks/           # dataset loader + bundled datasets (package data)
-  runtime/              # Clock abstraction, execution log recorder
+  runtime/              # Clock abstraction, execution log recorder, execution limits
   tools/                # tool contract, ToolExecutor, mock search/fetch tools
   agents/               # Agent protocol, deterministic research agent, fixtures, demo CLI
+  runner/               # scenario runner, fault injector, synthetic samples, demo CLI
 schemas/                # generated JSON Schema files (committed)
 tests/                  # pytest suite (no network, no external services)
 ```

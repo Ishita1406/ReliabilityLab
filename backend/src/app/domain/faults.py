@@ -56,6 +56,13 @@ class EmptyResultFault(_FaultBase):
     type: Literal[FaultType.EMPTY_RESULT]
 
 
+class IncompleteResultFault(_FaultBase):
+    type: Literal[FaultType.INCOMPLETE_RESULT]
+    keep_fraction: float = Field(
+        gt=0.0, lt=1.0, description="Fraction of the result (items or text) that is kept."
+    )
+
+
 class IncorrectOutputFault(_FaultBase):
     type: Literal[FaultType.INCORRECT_OUTPUT]
     replacement_output: str = Field(
@@ -85,6 +92,7 @@ FaultConfig = Annotated[
     | ToolErrorFault
     | MalformedOutputFault
     | EmptyResultFault
+    | IncompleteResultFault
     | IncorrectOutputFault
     | LatencyFault
     | RateLimitFault

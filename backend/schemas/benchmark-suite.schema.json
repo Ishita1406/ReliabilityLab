@@ -540,6 +540,71 @@
       "title": "ExpectedOutcome",
       "type": "object"
     },
+    "IncompleteResultFault": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "description": "Identifier unique within its scenario.",
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "target_tool": {
+          "description": "Name of the tool whose calls are affected.",
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Target Tool",
+          "type": "string"
+        },
+        "apply_on_calls": {
+          "anyOf": [
+            {
+              "items": {
+                "exclusiveMinimum": 0,
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "1-based call numbers of the target tool to affect; null means every call.",
+          "title": "Apply On Calls"
+        },
+        "probability": {
+          "default": 1.0,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Probability",
+          "type": "number"
+        },
+        "type": {
+          "const": "incomplete_result",
+          "title": "Type",
+          "type": "string"
+        },
+        "keep_fraction": {
+          "description": "Fraction of the result (items or text) that is kept.",
+          "exclusiveMaximum": 1.0,
+          "exclusiveMinimum": 0.0,
+          "title": "Keep Fraction",
+          "type": "number"
+        }
+      },
+      "required": [
+        "id",
+        "target_tool",
+        "type",
+        "keep_fraction"
+      ],
+      "title": "IncompleteResultFault",
+      "type": "object"
+    },
     "IncorrectOutputFault": {
       "additionalProperties": false,
       "properties": {
@@ -903,6 +968,7 @@
             "discriminator": {
               "mapping": {
                 "empty_result": "#/$defs/EmptyResultFault",
+                "incomplete_result": "#/$defs/IncompleteResultFault",
                 "incorrect_output": "#/$defs/IncorrectOutputFault",
                 "latency": "#/$defs/LatencyFault",
                 "malformed_output": "#/$defs/MalformedOutputFault",
@@ -925,6 +991,9 @@
               },
               {
                 "$ref": "#/$defs/EmptyResultFault"
+              },
+              {
+                "$ref": "#/$defs/IncompleteResultFault"
               },
               {
                 "$ref": "#/$defs/IncorrectOutputFault"

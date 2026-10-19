@@ -53,6 +53,9 @@ class ToolError(DomainModel):
     message: NonEmptyStr
     retryable: bool
     retry_after_ms: NonNegativeInt | None = None
+    http_status: int | None = Field(
+        default=None, ge=400, le=599, description="HTTP status for HTTP-style tool failures."
+    )
     field_errors: list[FieldError] = Field(default_factory=list)
 
     @classmethod
@@ -62,6 +65,7 @@ class ToolError(DomainModel):
         message: str,
         *,
         retry_after_ms: int | None = None,
+        http_status: int | None = None,
         field_errors: list[FieldError] | None = None,
     ) -> Self:
         """Build an error whose ``retryable`` flag follows ``RETRYABLE_CODES``."""
@@ -70,6 +74,7 @@ class ToolError(DomainModel):
             message=message,
             retryable=code in RETRYABLE_CODES,
             retry_after_ms=retry_after_ms,
+            http_status=http_status,
             field_errors=field_errors or [],
         )
 

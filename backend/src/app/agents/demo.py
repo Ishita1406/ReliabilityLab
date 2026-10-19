@@ -13,7 +13,12 @@ from app.agents.fixtures import FIXTURES, ResearchFixture
 from app.agents.interface import AgentResult, run_agent
 from app.agents.research import DeterministicResearchAgent
 from app.domain.ids import IdPrefix, derived_id
-from app.runtime.execution import DecisionStep, RejectedToolRequestStep, ToolCallStep
+from app.runtime.execution import (
+    DecisionStep,
+    FaultInjectedStep,
+    RejectedToolRequestStep,
+    ToolCallStep,
+)
 
 
 def execute(fixture: ResearchFixture) -> AgentResult:
@@ -42,6 +47,8 @@ def summarise(fixture: ResearchFixture, result: AgentResult) -> str:
             lines.append(f"  reject {step.requested_name}: {step.error.message}")
         elif isinstance(step, DecisionStep):
             lines.append(f"  note  {step.message}")
+        elif isinstance(step, FaultInjectedStep):
+            lines.append(f"  fault {step.fault_id} ({step.fault_type})")
     elapsed = (result.execution.finished_at - result.execution.started_at).total_seconds()
     lines.append(f"virtual time elapsed: {elapsed:.3f} s")
     return "\n".join(lines)
