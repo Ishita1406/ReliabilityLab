@@ -169,6 +169,27 @@ uv run python -m app.seed_demo                 # DEMO data: synthetic suite, rea
 uv run python scripts/prepare_e2e_db.py        # drop + recreate + seed reliabilitylab_e2e (e2e only)
 ```
 
+## Background execution (Celery + Redis)
+
+`POST /api/experiments` creates an experiment and returns **202 Accepted** with a status URL;
+a Celery worker runs it. PostgreSQL holds all durable state (experiment status, job attempts,
+execution lease, results); Redis is only the broker. Details:
+[docs/engineering/10-background-execution.md](../docs/engineering/10-background-execution.md).
+
+```bash
+docker compose -f ../infra/docker-compose.yml up -d redis
+uv run celery -A app.jobs.celery_app worker --loglevel=INFO     # start a worker
+uv run python -m app.jobs.recover                               # re-publish lost jobs
+curl -X POST localhost:8000/api/experiments -H 'Idempotency-Key: nightly-1' \
+  -H 'content-type: application/json' -d '{"name": "nightly", "suite_id": "...", ...}'
+curl localhost:8000/api/experiments/<id>/status                 # status and progress
+```
+
+`ExperimentService.run_experiment` still runs an experiment synchronously in-process (same
+executor, one attempt). Job integration tests (`tests/db/jobs/`) need the compose Redis
+(database 15 via `APP_TEST_REDIS_URL`); they are skipped with the reason if it is unreachable,
+or fail with `APP_REQUIRE_REDIS=1`.
+
 ## Database (PostgreSQL)
 
 Persistence uses PostgreSQL with SQLAlchemy 2.x and Alembic. Start the local database and
@@ -217,7 +238,9 @@ src/app/
   evaluation/           # evaluation engine, checks, LLM judge (Groq), diagnosis, demo CLI
   experiments/          # snapshots, executor, metrics, comparison, regression policy, CLIs
   review/               # human review records, queue, agreement metrics, fixtures, CLIs
-  api/                  # FastAPI routers: health, dashboard read API, reviews, OpenAPI export
+  api/                  # FastAPI routers: health, dashboard read API, reviews, jobs, OpenAPI export
+  jobs/                 # Celery app and task, job executor, submission, recovery, agent registry
+  logs.py               # structured JSON logging
   seed_demo.py          # labelled demo data for local development and e2e tests
 migrations/             # Alembic environment and revisions
 schemas/                # generated JSON Schema files (committed)

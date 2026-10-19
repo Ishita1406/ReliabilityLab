@@ -25,9 +25,16 @@ def _check_lifecycle(
     not_started: set[str],
     in_progress: set[str],
     may_skip_start: set[str],
+    waiting: frozenset[str] = frozenset(),
 ) -> None:
-    """Enforce that timestamps are present exactly when the status implies them, in order."""
-    if status in not_started:
+    """Enforce that timestamps are present exactly when the status implies them, in order.
+
+    ``waiting`` statuses are not finished and may or may not have started (e.g. queued again
+    for a retry after a transient failure)."""
+    if status in waiting:
+        if finished_at is not None:
+            raise ValueError(f"status '{status}' must not have a finish timestamp")
+    elif status in not_started:
         if started_at is not None or finished_at is not None:
             raise ValueError(f"status '{status}' must not have started or finished timestamps")
     elif status in in_progress:
@@ -72,6 +79,7 @@ class Experiment(DomainModel):
             not_started={ExperimentStatus.PENDING},
             in_progress={ExperimentStatus.RUNNING},
             may_skip_start={ExperimentStatus.CANCELLED},
+            waiting=frozenset({ExperimentStatus.QUEUED}),
         )
         return self
 

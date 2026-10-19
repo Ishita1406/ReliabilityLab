@@ -11,6 +11,7 @@ Transaction boundaries:
   runs that were committed before it.
 """
 
+import sys
 from collections.abc import Callable
 from datetime import datetime
 
@@ -18,14 +19,8 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app.agents.interface import AgentDescriptor
 from app.db.benchmarks import NotFoundError, load_agent_version, load_suite, save_agent, save_suite
-from app.db.evaluations import save_run_evaluation
-from app.db.runs import (
-    create_experiment,
-    load_experiment,
-    load_experiment_configuration,
-    save_run,
-    update_experiment_state,
-)
+from app.db.jobs import ensure_job, mark_queued
+from app.db.runs import create_experiment, load_experiment, load_experiment_configuration
 from app.domain.agent import AgentConfig, AgentVersion
 from app.domain.benchmark import BenchmarkSuite
 from app.domain.enums import ExperimentStatus
@@ -33,16 +28,15 @@ from app.domain.experiment import Experiment
 from app.domain.timestamps import utc_now
 from app.evaluation.engine import Evaluator
 from app.experiments.configuration import ExperimentConfiguration
-from app.experiments.executor import (
-    ExperimentConfigurationError,
-    check_inputs,
-    execute,
-    planned_requests,
-)
+from app.experiments.executor import ExperimentConfigurationError, check_inputs
+from app.jobs.executor import JobExecutor, JobOutcome, JobSettings
 from app.runner.runner import ScenarioRunner
 from app.runtime.limits import ExecutionLimits
-from app.tracing.collector import TraceCollector
 from app.tracing.policy import DEFAULT_POLICY, TracePayloadPolicy
+
+INLINE_WORKER = "inline"
+INLINE_LEASE_SECONDS = 24 * 3600.0
+"""Synchronous execution holds the lease for the whole run; nothing else can take it over."""
 
 
 class ExperimentStateError(RuntimeError):
@@ -56,11 +50,12 @@ class ExperimentService:
         *,
         policy: TracePayloadPolicy = DEFAULT_POLICY,
         now: Callable[[], datetime] = utc_now,
+        max_attempts: int = 3,
     ) -> None:
         self._sessions = sessions
         self._policy = policy
-        self._collector = TraceCollector(policy)
         self._now = now
+        self._max_attempts = max_attempts
 
     def register(self, suite: BenchmarkSuite, config: AgentConfig, version: AgentVersion) -> None:
         """Idempotently store a suite and an agent version (conflicting content is refused)."""
@@ -82,8 +77,11 @@ class ExperimentService:
         evaluator_version: str,
         agent_implementation: AgentDescriptor,
         description: str | None = None,
+        idempotency_key: str | None = None,
+        request_sha256: str | None = None,
     ) -> Experiment:
-        """Create a pending experiment and record its immutable configuration snapshot."""
+        """Create a pending experiment, its immutable configuration snapshot, and its job row
+        (with the creation idempotency key, if any) in one transaction."""
         experiment = Experiment(
             name=name,
             description=description,
@@ -111,16 +109,26 @@ class ExperimentService:
                 evaluator_version=evaluator_version,
             )
             create_experiment(session, experiment, configuration)
+            ensure_job(
+                session,
+                experiment.id,
+                now=experiment.created_at,
+                max_attempts=self._max_attempts,
+                idempotency_key=idempotency_key,
+                request_sha256=request_sha256,
+            )
         return experiment
 
     def run_experiment(
         self, experiment_id: str, runner: ScenarioRunner, evaluator: Evaluator
     ) -> list[str]:
-        """Execute and evaluate every (scenario, repetition) of a pending experiment.
+        """Execute a pending experiment synchronously, in this process.
 
-        The runner's agent, the evaluator, and the suite must match the configuration snapshot;
-        otherwise ``ExperimentConfigurationError`` is raised (before any run when detectable).
-        """
+        Same code path as background execution (``app.jobs.executor.JobExecutor``) with a single
+        attempt and no concurrency limit. The runner's agent, the evaluator, and the suite must
+        match the snapshot: detectable mismatches raise ``ExperimentConfigurationError`` before
+        anything starts (the experiment stays ``pending``); errors during execution mark it
+        ``failed`` and are re-raised. Returns the stored run IDs in planned order."""
         with self._sessions.begin() as session:
             experiment = load_experiment(session, experiment_id)
             if experiment.status is not ExperimentStatus.PENDING:
@@ -137,25 +145,18 @@ class ExperimentService:
             if stored_version != configuration.agent_version:
                 raise ExperimentConfigurationError("agent version changed since creation")
             check_inputs(configuration, suite, evaluator)
-            experiment = experiment.updated(status=ExperimentStatus.RUNNING, started_at=self._now())
-            update_experiment_state(session, experiment)
+            ensure_job(session, experiment_id, now=self._now(), max_attempts=1)
+            mark_queued(session, experiment_id, self._now())
 
-        run_ids: list[str] = []
-        try:
-            for request in planned_requests(experiment.id, configuration, suite):
-                executed = execute(request, configuration, runner, evaluator, self._collector)
-                with self._sessions.begin() as session:
-                    save_run(session, executed.result, executed.trace, self._policy)
-                    save_run_evaluation(session, experiment.id, executed.evaluation)
-                run_ids.append(executed.result.run.id)
-        except Exception:
-            # Record the failure, then let the original error propagate unchanged.
-            self._finish(experiment, ExperimentStatus.FAILED)
-            raise
-        self._finish(experiment, ExperimentStatus.COMPLETED)
-        return run_ids
-
-    def _finish(self, experiment: Experiment, status: ExperimentStatus) -> None:
-        finished = experiment.updated(status=status, finished_at=self._now())
-        with self._sessions.begin() as session:
-            update_experiment_state(session, finished)
+        executor = JobExecutor(
+            self._sessions,
+            settings=JobSettings(lease_seconds=INLINE_LEASE_SECONDS, max_running=sys.maxsize),
+            now=self._now,
+            policy=self._policy,
+        )
+        result = executor.execute(experiment_id, INLINE_WORKER, runner=runner, evaluator=evaluator)
+        if result.error is not None:
+            raise result.error
+        if result.outcome is not JobOutcome.COMPLETED:
+            raise ExperimentStateError(f"experiment '{experiment_id}' ended as {result.outcome}")
+        return result.run_ids

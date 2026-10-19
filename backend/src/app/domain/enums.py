@@ -55,7 +55,14 @@ class MalformationKind(StrEnum):
 
 
 class ExperimentStatus(StrEnum):
+    """Lifecycle: pending -> queued -> running -> completed | failed | cancelled.
+
+    ``pending``: created, not submitted for execution. ``queued``: submitted and waiting for a
+    worker (also while waiting for a retry after a transient failure, so it may already have a
+    start timestamp). ``running``: a worker holds the execution lease."""
+
     PENDING = "pending"
+    QUEUED = "queued"
     RUNNING = "running"
     COMPLETED = "completed"
     FAILED = "failed"

@@ -19,4 +19,17 @@ The credentials in the compose file (`reliabilitylab` / `reliabilitylab_local_de
 defaults**. Override them with `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, and
 `POSTGRES_PORT` in your environment; never reuse them anywhere real.
 
-No other services (Redis, workers, deployment manifests) exist yet.
+## Redis (`docker-compose.yml`)
+
+Redis 8.6.7, bound to `127.0.0.1:6380`, used **only** as the Celery broker (job coordination
+and transient queue state). Persistence is disabled on purpose: every durable fact (experiments,
+runs, job state) lives in PostgreSQL, and after a Redis restart any queued job whose message was
+lost is re-published from PostgreSQL by worker start-up recovery or
+`uv run python -m app.jobs.recover`.
+
+```bash
+docker compose -f infra/docker-compose.yml up -d redis
+```
+
+Tests use database 15 (`APP_TEST_REDIS_URL`), the e2e tests database 14; both are flushed by
+their test setup. No deployment manifests exist yet.

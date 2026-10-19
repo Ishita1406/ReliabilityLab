@@ -4,7 +4,13 @@ import { useActionState, useId } from "react";
 
 import type { HumanReview } from "@/lib/api/types";
 import { humanize } from "@/lib/format";
-import { type FormState, IDLE, REVIEWABLE_CATEGORIES, REVIEW_LABELS } from "@/lib/review-form";
+import {
+  type FormState,
+  IDLE,
+  REVIEWABLE_CATEGORIES,
+  REVIEW_LABELS,
+  formKey,
+} from "@/lib/review-form";
 
 export type ReviewAction = (previous: FormState, formData: FormData) => Promise<FormState>;
 
@@ -163,7 +169,12 @@ export function SubmitReviewForm({ action }: { action: ReviewAction }) {
   const [state, formAction, pending] = useActionState(action, IDLE);
   const id = useId();
   return (
-    <form action={formAction} aria-label="Submit a review" className="flex flex-col gap-4">
+    <form
+      key={formKey(state.values)}
+      action={formAction}
+      aria-label="Submit a review"
+      className="flex flex-col gap-4"
+    >
       <label className="flex flex-col gap-1 text-sm">
         Reviewer name
         <input
@@ -200,6 +211,7 @@ export function CorrectReviewForm({
   const id = useId();
   return (
     <form
+      key={formKey(state.values)}
       action={formAction}
       aria-label={`Correct ${review.reviewer}'s review`}
       className="flex flex-col gap-4"

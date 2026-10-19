@@ -1,10 +1,11 @@
 """(Re)create the end-to-end test database and seed it with demo data.
 
-    uv run python scripts/prepare_e2e_db.py [DATABASE_URL]
+    uv run python scripts/prepare_e2e_db.py [DATABASE_URL] [--redis-url REDIS_URL]
 
 DESTRUCTIVE for the named database only: it is dropped and recreated. As a guard, the database
 name must end with ``_e2e``. The URL defaults to the local compose server with database
-``reliabilitylab_e2e``. Prints the seeded experiment IDs as JSON.
+``reliabilitylab_e2e``. With ``--redis-url``, that Redis database is flushed too (refused for
+database 0). Prints the seeded experiment IDs as JSON.
 """
 
 import json
@@ -25,7 +26,24 @@ DEFAULT_URL = (
 )
 
 
+def flush_redis(redis_url: str) -> None:
+    import redis
+
+    client = redis.Redis.from_url(redis_url)
+    try:
+        if int(client.connection_pool.connection_kwargs.get("db", 0)) == 0:
+            raise SystemExit("refusing to flush Redis database 0; use a dedicated e2e database")
+        client.flushdb()
+    finally:
+        client.close()
+
+
 def main(argv: list[str]) -> int:
+    redis_url: str | None = None
+    if "--redis-url" in argv:
+        index = argv.index("--redis-url")
+        redis_url = argv[index + 1]
+        argv = argv[:index] + argv[index + 2 :]
     url = make_url(argv[0] if argv else DEFAULT_URL)
     name = url.database or ""
     if not name.endswith("_e2e"):
@@ -40,6 +58,8 @@ def main(argv: list[str]) -> int:
             connection.execute(text(f'CREATE DATABASE "{name}"'))
     finally:
         admin.dispose()
+    if redis_url:
+        flush_redis(redis_url)
     rendered = url.render_as_string(hide_password=False)
     config = Config(str(BACKEND / "alembic.ini"))
     config.set_main_option("script_location", str(BACKEND / "migrations"))

@@ -480,6 +480,45 @@ class TraceEventRow(Base):
     attributes: Mapped[dict[str, Any]] = mapped_column(JSONB, server_default=text("'{}'::jsonb"))
 
 
+class ExperimentJobRow(Base):
+    """Execution bookkeeping for one experiment (Milestone 10). The experiment's ``status`` is
+    the state machine; this row holds attempts, the execution lease, cancellation, the last
+    error, and the creation idempotency key. Redis never holds any of this."""
+
+    __tablename__ = "experiment_jobs"
+    __table_args__ = (
+        CheckConstraint(
+            "attempts >= 0 AND max_attempts >= 1 AND attempts <= max_attempts",
+            name="attempt_bounds",
+        ),
+        CheckConstraint(
+            "(lease_owner IS NULL) = (lease_expires_at IS NULL)", name="lease_complete"
+        ),
+        CheckConstraint(
+            "(idempotency_key IS NULL) = (request_sha256 IS NULL)", name="idempotency_complete"
+        ),
+        UniqueConstraint("idempotency_key"),
+    )
+
+    experiment_id: Mapped[str] = mapped_column(
+        ForeignKey("experiments.id", ondelete="CASCADE"), primary_key=True
+    )
+    idempotency_key: Mapped[str | None] = mapped_column(Text)
+    request_sha256: Mapped[str | None] = mapped_column(String(64))
+    attempts: Mapped[int] = mapped_column(Integer, server_default=text("0"))
+    max_attempts: Mapped[int] = mapped_column(Integer)
+    lease_owner: Mapped[str | None] = mapped_column(Text)
+    lease_expires_at: Mapped[datetime | None] = mapped_column(index=True)
+    heartbeat_at: Mapped[datetime | None]
+    cancel_requested_at: Mapped[datetime | None]
+    celery_task_id: Mapped[str | None] = mapped_column(Text)
+    queued_at: Mapped[datetime | None]
+    last_error_type: Mapped[str | None] = mapped_column(Text)
+    last_error_message: Mapped[str | None] = mapped_column(Text)
+    created_at: Created
+    updated_at: Mapped[datetime] = mapped_column(server_default=func.now())
+
+
 # --- evaluation and review -------------------------------------------------------------------
 
 

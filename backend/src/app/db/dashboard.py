@@ -10,6 +10,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.db.models import (
+    AgentConfigRow,
     AgentVersionRow,
     BenchmarkCaseRow,
     BenchmarkScenarioRow,
@@ -233,3 +234,29 @@ def run_summaries(
             )
         )
     return summaries
+
+
+class AgentVersionSummary(DomainModel):
+    id: str
+    agent_name: str
+    version_label: str
+    model: str
+    created_at: datetime
+
+
+def list_agent_versions(session: Session) -> list[AgentVersionSummary]:
+    rows = session.execute(
+        select(AgentVersionRow, AgentConfigRow.name)
+        .join(AgentConfigRow, AgentConfigRow.id == AgentVersionRow.agent_config_id)
+        .order_by(AgentConfigRow.name, AgentVersionRow.version_label)
+    ).all()
+    return [
+        AgentVersionSummary(
+            id=version.id,
+            agent_name=name,
+            version_label=version.version_label,
+            model=f"{version.model_provider}/{version.model_name}",
+            created_at=version.created_at,
+        )
+        for version, name in rows
+    ]

@@ -9,7 +9,11 @@
  * `RELIABILITYLAB_API_URL` and is never sent to the browser.
  */
 import type {
+  AgentVersionSummary,
   CalibrationReport,
+  ExperimentAccepted,
+  ExperimentCreate,
+  JobStatusView,
   ComparisonResponse,
   ExperimentDetail,
   ExperimentSummary,
@@ -57,17 +61,24 @@ function detailOf(body: unknown): string | null {
 
 export async function request<T>(
   path: string,
-  init?: { method?: "GET" | "POST"; body?: unknown; query?: Record<string, string> },
+  init?: {
+    method?: "GET" | "POST";
+    body?: unknown;
+    query?: Record<string, string>;
+    headers?: Record<string, string>;
+  },
 ): Promise<ApiResult<T>> {
   const url = new URL(apiBaseUrl() + path);
   for (const [key, value] of Object.entries(init?.query ?? {})) url.searchParams.set(key, value);
   let response: Response;
   try {
     const options: RequestInit = { method: init?.method ?? "GET", cache: "no-store" };
+    const headers: Record<string, string> = { ...init?.headers };
     if (init?.body !== undefined) {
-      options.headers = { "content-type": "application/json" };
+      headers["content-type"] = "application/json";
       options.body = JSON.stringify(init.body);
     }
+    if (Object.keys(headers).length) options.headers = headers;
     response = await fetch(url, options);
   } catch (cause) {
     return {
@@ -128,6 +139,19 @@ export const api = {
   runReviews: (runId: string) => request<RunReviews>(`/api/runs/${segment(runId)}/reviews`),
   submitReview: (runId: string, body: ReviewSubmission) =>
     request<HumanReview>(`/api/runs/${segment(runId)}/reviews`, { method: "POST", body }),
+  agentVersions: () => request<AgentVersionSummary[]>("/api/agent-versions"),
+  experimentStatus: (id: string) =>
+    request<JobStatusView>(`/api/experiments/${segment(id)}/status`),
+  createExperiment: (body: ExperimentCreate, idempotencyKey: string) =>
+    request<ExperimentAccepted>("/api/experiments", {
+      method: "POST",
+      body,
+      headers: { "idempotency-key": idempotencyKey },
+    }),
+  submitExperiment: (id: string) =>
+    request<ExperimentAccepted>(`/api/experiments/${segment(id)}/submit`, { method: "POST" }),
+  cancelExperiment: (id: string) =>
+    request<JobStatusView>(`/api/experiments/${segment(id)}/cancel`, { method: "POST" }),
   correctReview: (reviewId: string, body: ReviewCorrection) =>
     request<HumanReview>(`/api/reviews/${segment(reviewId)}/corrections`, {
       method: "POST",

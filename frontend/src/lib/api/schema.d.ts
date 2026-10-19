@@ -4,6 +4,23 @@
  */
 
 export interface paths {
+    "/api/agent-versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Agent Versions */
+        get: operations["get_agent_versions_api_agent_versions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/comparisons": {
         parameters: {
             query?: never;
@@ -34,7 +51,8 @@ export interface paths {
         /** Get Experiments */
         get: operations["get_experiments_api_experiments_get"];
         put?: never;
-        post?: never;
+        /** Create Experiment */
+        post: operations["create_experiment_api_experiments_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -75,6 +93,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/experiments/{experiment_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel Experiment */
+        post: operations["cancel_experiment_api_experiments__experiment_id__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/experiments/{experiment_id}/review-queue": {
         parameters: {
             query?: never;
@@ -103,6 +138,40 @@ export interface paths {
         get: operations["get_experiment_runs_api_experiments__experiment_id__runs_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/experiments/{experiment_id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Status */
+        get: operations["get_status_api_experiments__experiment_id__status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/experiments/{experiment_id}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit Experiment */
+        post: operations["submit_experiment_api_experiments__experiment_id__submit_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -293,6 +362,22 @@ export interface components {
              * Version Label
              * @description Human-readable label, unique per agent config.
              */
+            version_label: string;
+        };
+        /** AgentVersionSummary */
+        AgentVersionSummary: {
+            /** Agent Name */
+            agent_name: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Id */
+            id: string;
+            /** Model */
+            model: string;
+            /** Version Label */
             version_label: string;
         };
         /**
@@ -1062,6 +1147,16 @@ export interface components {
              */
             weight: number;
         };
+        /** ExperimentAccepted */
+        ExperimentAccepted: {
+            /** Experiment Id */
+            experiment_id: string;
+            /** Idempotent Replay */
+            idempotent_replay: boolean;
+            status: components["schemas"]["ExperimentStatus"];
+            /** Status Url */
+            status_url: string;
+        };
         /** ExperimentComparison */
         ExperimentComparison: {
             /** Baseline Fingerprint */
@@ -1140,6 +1235,40 @@ export interface components {
             /** Suite Version */
             suite_version: string;
         };
+        /** ExperimentCreate */
+        ExperimentCreate: {
+            /** Agent Version Id */
+            agent_version_id: string;
+            /** Description */
+            description?: string | null;
+            limits?: components["schemas"]["LimitsInput"] | null;
+            /** Name */
+            name: string;
+            /**
+             * Repetitions
+             * @default 1
+             */
+            repetitions: number;
+            /**
+             * Scenario Ids
+             * @description null: every scenario
+             */
+            scenario_ids?: string[] | null;
+            /**
+             * Seed
+             * @default 0
+             */
+            seed: number;
+            /**
+             * Submit
+             * @default true
+             */
+            submit: boolean;
+            /** Suite Id */
+            suite_id: string;
+            /** Suite Version */
+            suite_version: string;
+        };
         /** ExperimentDetail */
         ExperimentDetail: {
             configuration: components["schemas"]["ExperimentConfiguration"] | null;
@@ -1186,9 +1315,14 @@ export interface components {
         };
         /**
          * ExperimentStatus
+         * @description Lifecycle: pending -> queued -> running -> completed | failed | cancelled.
+         *
+         *     ``pending``: created, not submitted for execution. ``queued``: submitted and waiting for a
+         *     worker (also while waiting for a retry after a transient failure, so it may already have a
+         *     start timestamp). ``running``: a worker holds the execution lease.
          * @enum {string}
          */
-        ExperimentStatus: "pending" | "running" | "completed" | "failed" | "cancelled";
+        ExperimentStatus: "pending" | "queued" | "running" | "completed" | "failed" | "cancelled";
         /** ExperimentSummary */
         ExperimentSummary: {
             /** Agent Model */
@@ -1444,6 +1578,40 @@ export interface components {
              */
             type: "incorrect_output";
         };
+        /** JobStatusView */
+        JobStatusView: {
+            /** Attempts */
+            attempts: number;
+            /** Cancel Requested */
+            cancel_requested: boolean;
+            /** Experiment Id */
+            experiment_id: string;
+            /** Finished At */
+            finished_at: string | null;
+            /** Heartbeat At */
+            heartbeat_at: string | null;
+            /** Last Error Message */
+            last_error_message: string | null;
+            /** Last Error Type */
+            last_error_type: string | null;
+            /** Lease Expires At */
+            lease_expires_at: string | null;
+            /** Max Attempts */
+            max_attempts: number;
+            /**
+             * Poll After Seconds
+             * @description Suggested polling interval; null when done.
+             */
+            poll_after_seconds: number | null;
+            progress: components["schemas"]["ProgressView"];
+            /** Queued At */
+            queued_at: string | null;
+            /** Started At */
+            started_at: string | null;
+            status: components["schemas"]["ExperimentStatus"];
+            /** Terminal */
+            terminal: boolean;
+        };
         JsonValue: unknown;
         /** LabelAssignment */
         LabelAssignment: {
@@ -1493,6 +1661,15 @@ export interface components {
             /** Score */
             score: number | null;
             verdict: components["schemas"]["Verdict"];
+        };
+        /** LimitsInput */
+        LimitsInput: {
+            /** Deadline Seconds */
+            deadline_seconds?: number | null;
+            /** Max Steps */
+            max_steps?: number | null;
+            /** Max Tool Calls */
+            max_tool_calls?: number | null;
         };
         /**
          * MalformationKind
@@ -1667,6 +1844,15 @@ export interface components {
             passed: boolean;
             /** Rules */
             rules: components["schemas"]["RuleResult"][];
+        };
+        /** ProgressView */
+        ProgressView: {
+            /** Evaluated Runs */
+            evaluated_runs: number;
+            /** Planned Runs */
+            planned_runs: number;
+            /** Stored Runs */
+            stored_runs: number;
         };
         /**
          * ProhibitedActionsCriterion
@@ -2629,6 +2815,26 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    get_agent_versions_api_agent_versions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentVersionSummary"][];
+                };
+            };
+        };
+    };
     get_comparison_api_comparisons_get: {
         parameters: {
             query: {
@@ -2678,6 +2884,55 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ExperimentSummary"][];
                 };
+            };
+        };
+    };
+    create_experiment_api_experiments_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "idempotency-key"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExperimentCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExperimentAccepted"];
+                };
+            };
+            /** @description Idempotency key reused */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Queue down */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -2745,6 +3000,37 @@ export interface operations {
             };
         };
     };
+    cancel_experiment_api_experiments__experiment_id__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                experiment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobStatusView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_review_queue_api_experiments__experiment_id__review_queue_get: {
         parameters: {
             query?: never;
@@ -2797,6 +3083,68 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RunSummary"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_status_api_experiments__experiment_id__status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                experiment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobStatusView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    submit_experiment_api_experiments__experiment_id__submit_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                experiment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExperimentAccepted"];
                 };
             };
             /** @description Validation Error */

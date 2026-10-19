@@ -14,7 +14,7 @@ test("review workflow: experiment → failed case → trace → review → corre
     .getByRole("link", { name: "Experiments" })
     .click();
   await page.getByRole("link", { name: "[demo] baseline (0.1.0)" }).click();
-  await expect(page.getByText("12 of 12 planned runs stored · 12 evaluated")).toBeVisible();
+  await expect(page.getByText("12 of 12 runs stored · 12 evaluated")).toBeVisible();
 
   const failed = page.getByRole("table", { name: "Failed and unresolved cases" });
   const row = failed.getByRole("row", { name: /fetch-misleading/ });

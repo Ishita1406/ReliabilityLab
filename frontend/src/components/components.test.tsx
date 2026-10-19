@@ -302,6 +302,7 @@ describe("rejected submissions keep the reviewer's input", () => {
     await user.type(screen.getByLabelText("Reason for the correction"), "typo");
     await user.click(screen.getByRole("radio", { name: "ambiguous" }));
     await user.type(screen.getByLabelText(/Rationale/), "unclear expectation");
+    await user.selectOptions(screen.getByLabelText("security violation"), "present");
     await user.click(screen.getByRole("button", { name: "Save correction" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
@@ -310,5 +311,7 @@ describe("rejected submissions keep the reviewer's input", () => {
     expect(screen.getByLabelText("Reason for the correction")).toHaveValue("typo");
     expect(screen.getByRole("radio", { name: "ambiguous" })).toBeChecked();
     expect(screen.getByLabelText(/Rationale/)).toHaveValue("unclear expectation");
+    // React's reset does not restore <select> values on its own; formKey remounts the form.
+    expect(screen.getByLabelText("security violation")).toHaveValue("present");
   });
 });

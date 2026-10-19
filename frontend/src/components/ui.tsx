@@ -3,7 +3,7 @@
  * and missing values are rendered as "Not available" with a reason, never as zero.
  */
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { type ReactNode, useId } from "react";
 
 import type { ApiError } from "@/lib/api/client";
 import type { MetricValue } from "@/lib/api/types";
@@ -42,7 +42,9 @@ export function Section({
   children: ReactNode;
   id?: string;
 }) {
-  const headingId = id ? `${id}-heading` : undefined;
+  // Every section is a named region (announced by screen readers, addressable by tests).
+  const generated = useId();
+  const headingId = `${id ?? generated}-heading`;
   return (
     <section aria-labelledby={headingId} id={id} className="mb-8">
       <h2 id={headingId} className="mb-1 text-lg font-semibold">
@@ -118,6 +120,8 @@ const STATUS_TONES: Record<string, Tone> = {
   unavailable: "warn",
   not_comparable: "warn",
   running: "warn",
+  queued: "warn",
+  cancelled: "neutral",
   pending: "neutral",
   unchanged: "neutral",
   disabled: "neutral",

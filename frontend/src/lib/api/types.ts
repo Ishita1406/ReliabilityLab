@@ -38,6 +38,10 @@ export type ReviewSubmission = Schemas["ReviewSubmission"];
 export type ReviewCorrection = Schemas["ReviewCorrection"];
 export type QueueItem = Schemas["QueueItem"];
 export type CalibrationReport = Schemas["CalibrationReport"];
+export type JobStatusView = Schemas["JobStatusView"];
+export type ExperimentCreate = Schemas["ExperimentCreate"];
+export type ExperimentAccepted = Schemas["ExperimentAccepted"];
+export type AgentVersionSummary = Schemas["AgentVersionSummary"];
 
 export type Verdict = Schemas["Verdict"];
 export type RunStatus = Schemas["RunStatus"];

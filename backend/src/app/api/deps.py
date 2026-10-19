@@ -23,6 +23,7 @@ from app.db.session import (
     session_factory,
 )
 from app.experiments.comparison import ComparisonError
+from app.experiments.service import ExperimentStateError
 from app.review.models import ReviewHistoryError
 from app.review.service import ReviewWorkflowError
 
@@ -74,6 +75,10 @@ def register_error_handlers(app: FastAPI) -> None:
         # request body itself parsed; reported like request validation errors.
         messages = "; ".join(str(e["msg"]) for e in exc.errors()[:5])
         return _error(422, "invalid", messages)
+
+    @app.exception_handler(ExperimentStateError)
+    async def state_conflict(_: Request, exc: ExperimentStateError) -> JSONResponse:
+        return _error(409, "invalid_state", str(exc))
 
     @app.exception_handler(IntegrityError)
     async def integrity(_: Request, exc: IntegrityError) -> JSONResponse:

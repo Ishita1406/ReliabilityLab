@@ -35,8 +35,8 @@ commands, and neither needs the other to run or be tested.
 ## Quick start
 
 ```bash
-# Database (PostgreSQL on 127.0.0.1:5433)
-docker compose -f infra/docker-compose.yml up -d postgres
+# Database (PostgreSQL on 127.0.0.1:5433) and job queue (Redis on 127.0.0.1:6380)
+docker compose -f infra/docker-compose.yml up -d postgres redis
 
 # Backend: http://localhost:8000/health
 cd backend
@@ -44,6 +44,8 @@ uv sync --locked
 export APP_DATABASE_URL=postgresql+psycopg://reliabilitylab:reliabilitylab_local_dev@127.0.0.1:5433/reliabilitylab
 uv run alembic upgrade head
 uv run uvicorn app.main:app --reload --port 8000
+# Background worker (third terminal, in backend/): runs queued experiments
+uv run celery -A app.jobs.celery_app worker --loglevel=INFO
 
 # Frontend: http://localhost:3000 (in a second terminal)
 cd frontend

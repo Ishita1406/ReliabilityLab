@@ -1,8 +1,11 @@
 import { Suspense } from "react";
 
 import { ExperimentView } from "@/components/experiment-view";
+import { JobPanel } from "@/components/job-panel";
 import { ErrorState, LoadingState, PageHeader, TextLink } from "@/components/ui";
 import { api } from "@/lib/api/client";
+
+import { cancelExperimentAction, submitExperimentAction } from "../actions";
 
 async function ExperimentData({
   params,
@@ -10,13 +13,25 @@ async function ExperimentData({
   params: PageProps<"/experiments/[experimentId]">["params"];
 }) {
   const { experimentId } = await params;
-  const result = await api.experiment(experimentId);
-  if (!result.ok) return <ErrorState error={result.error} title="Could not load the experiment" />;
+  const [detail, status] = await Promise.all([
+    api.experiment(experimentId),
+    api.experimentStatus(experimentId),
+  ]);
+  if (!detail.ok) return <ErrorState error={detail.error} title="Could not load the experiment" />;
+  const jobPanel = status.ok ? (
+    <JobPanel
+      job={status.data}
+      submitAction={submitExperimentAction.bind(null, experimentId)}
+      cancelAction={cancelExperimentAction.bind(null, experimentId)}
+    />
+  ) : (
+    <ErrorState error={status.error} title="Could not load the job status" />
+  );
   return (
     <>
-      <h2 className="mb-1 text-xl font-semibold">{result.data.experiment.name}</h2>
-      <p className="mb-6 font-mono text-xs text-zinc-500">{result.data.experiment.id}</p>
-      <ExperimentView data={result.data} />
+      <h2 className="mb-1 text-xl font-semibold">{detail.data.experiment.name}</h2>
+      <p className="mb-6 font-mono text-xs text-zinc-500">{detail.data.experiment.id}</p>
+      <ExperimentView data={detail.data} jobPanel={jobPanel} />
     </>
   );
 }

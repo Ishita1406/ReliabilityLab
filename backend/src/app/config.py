@@ -46,6 +46,47 @@ class Settings(BaseSettings):
         default=1, ge=1, le=5, description="Independent judge calls per rubric criterion."
     )
 
+    # --- background execution (Celery + Redis; PostgreSQL stays the source of truth) -------
+    redis_url: SecretStr = Field(
+        default=SecretStr("redis://127.0.0.1:6380/0"),
+        description="Celery broker. Redis holds only transient queue state.",
+    )
+    worker_concurrency: int = Field(default=2, ge=1, le=64, description="Tasks per worker.")
+    max_running_experiments: int = Field(
+        default=4, ge=1, description="Experiments allowed to run at once across all workers."
+    )
+    job_max_attempts: int = Field(default=3, ge=1, le=20)
+    job_retry_backoff_seconds: float = Field(default=5.0, ge=0)
+    job_busy_retry_seconds: float = Field(
+        default=10.0, ge=0, description="Delay before retrying when the concurrency limit is hit."
+    )
+    job_lease_seconds: float = Field(
+        default=120.0, gt=0, description="Execution lease; renewed after every run."
+    )
+    job_soft_time_limit_seconds: float = Field(
+        default=3600.0, gt=0, description="Wall-clock limit for one experiment job attempt."
+    )
+    broker_visibility_timeout_seconds: float = Field(
+        default=7200.0,
+        gt=0,
+        description="Redis redelivers unacknowledged tasks after this; keep it above the job "
+        "time limit.",
+    )
+    enqueue_timeout_seconds: float = Field(default=2.0, gt=0)
+    agent_plugins: str = Field(
+        default="",
+        description="Comma-separated modules that register extra agent implementations.",
+    )
+
+    # --- per-run limits accepted by the API (defaults and upper bounds) -------------------
+    default_run_max_steps: int = Field(default=40, ge=1)
+    default_run_max_tool_calls: int = Field(default=12, ge=1)
+    default_run_deadline_seconds: float = Field(default=120.0, gt=0)
+    max_run_max_steps: int = Field(default=200, ge=1)
+    max_run_max_tool_calls: int = Field(default=100, ge=1)
+    max_run_deadline_seconds: float = Field(default=900.0, gt=0)
+    max_repetitions: int = Field(default=20, ge=1)
+
 
 @lru_cache
 def get_settings() -> Settings:

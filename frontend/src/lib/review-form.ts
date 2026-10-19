@@ -108,6 +108,15 @@ export interface FormState {
 
 export const IDLE: FormState = { status: "idle", message: "", errors: {} };
 
+/**
+ * React's post-action form reset restores text inputs and radios from updated defaults but
+ * not <select> elements. Keying the <form> by the returned values remounts it, so every field
+ * (selects included) is recreated from the values the user submitted.
+ */
+export function formKey(values: Record<string, string> | undefined): string {
+  return values ? JSON.stringify(values) : "initial";
+}
+
 export function submittedValues(formData: FormData): Record<string, string> {
   const values: Record<string, string> = {};
   for (const [key, value] of formData.entries()) {

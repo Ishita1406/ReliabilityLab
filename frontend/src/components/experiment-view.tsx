@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 import type { ExperimentConfiguration, ExperimentDetail } from "@/lib/api/types";
 import { dateTime, humanize, scenarioName } from "@/lib/format";
 
@@ -92,26 +94,35 @@ export function ConfigurationSnapshot({
   );
 }
 
-export function ExperimentView({ data }: { data: ExperimentDetail }) {
+export function ExperimentView({
+  data,
+  jobPanel,
+}: {
+  data: ExperimentDetail;
+  /** Live job status and controls; replaces the static status summary when given. */
+  jobPanel?: ReactNode;
+}) {
   const { experiment, configuration, metrics, runs } = data;
   const problems = runs.filter((r) => r.verdict !== "passed");
   return (
     <>
       <Section title="Status">
-        <div className="flex flex-wrap items-start gap-6">
-          <div className="flex items-center gap-2">
-            <StatusBadge status={experiment.status} />
-            <span className="text-sm text-zinc-600 dark:text-zinc-400">
-              created {dateTime(experiment.created_at)} · finished{" "}
-              {dateTime(experiment.finished_at) ?? <Missing reason="not finished" />}
-            </span>
+        {jobPanel ?? (
+          <div className="flex flex-wrap items-start gap-6">
+            <div className="flex items-center gap-2">
+              <StatusBadge status={experiment.status} />
+              <span className="text-sm text-zinc-600 dark:text-zinc-400">
+                created {dateTime(experiment.created_at)} · finished{" "}
+                {dateTime(experiment.finished_at) ?? <Missing reason="not finished" />}
+              </span>
+            </div>
+            <Progress
+              stored={experiment.stored_runs}
+              evaluated={experiment.evaluated_runs}
+              planned={experiment.planned_runs}
+            />
           </div>
-          <Progress
-            stored={experiment.stored_runs}
-            evaluated={experiment.evaluated_runs}
-            planned={experiment.planned_runs}
-          />
-        </div>
+        )}
         {experiment.description ? <p className="mt-3 text-sm">{experiment.description}</p> : null}
       </Section>
 

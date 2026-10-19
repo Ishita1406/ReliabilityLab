@@ -11,6 +11,7 @@ const WEB_PORT = 3010;
 export const E2E_DATABASE_URL =
   process.env.E2E_DATABASE_URL ??
   "postgresql+psycopg://reliabilitylab:reliabilitylab_local_dev@127.0.0.1:5433/reliabilitylab_e2e";
+export const E2E_REDIS_URL = process.env.E2E_REDIS_URL ?? "redis://127.0.0.1:6380/14";
 const PATH = `${process.env.HOME}/.local/bin:${process.env.PATH}`;
 
 export default defineConfig({
@@ -30,7 +31,23 @@ export default defineConfig({
       command: `uv run uvicorn app.main:app --port ${API_PORT}`,
       cwd: "../backend",
       url: `http://127.0.0.1:${API_PORT}/health`,
-      env: { APP_DATABASE_URL: E2E_DATABASE_URL, PATH },
+      env: { APP_DATABASE_URL: E2E_DATABASE_URL, APP_REDIS_URL: E2E_REDIS_URL, PATH },
+      reuseExistingServer: false,
+      timeout: 60_000,
+    },
+    {
+      // A real Celery worker (solo pool) on the e2e Redis database; ready once start-up
+      // recovery has logged its JSON event. Recovery may fail when the worker starts before
+      // global setup has recreated the database; that is logged and is not fatal.
+      command: "uv run celery -A app.jobs.celery_app worker --pool=solo --loglevel=WARNING",
+      cwd: "../backend",
+      wait: { stderr: /"event": "worker\.(recovered_jobs|recovery_failed)"/ },
+      env: {
+        APP_DATABASE_URL: E2E_DATABASE_URL,
+        APP_REDIS_URL: E2E_REDIS_URL,
+        APP_JOB_RETRY_BACKOFF_SECONDS: "1",
+        PATH,
+      },
       reuseExistingServer: false,
       timeout: 60_000,
     },

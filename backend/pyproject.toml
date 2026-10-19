@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.13,<3.14"
 dependencies = [
     "alembic>=1.20.0,<2",
+    "celery[redis]>=5.6.3,<5.7",
     "fastapi>=0.146.0,<0.147",
     "httpx>=0.28.1,<0.29",
     "jsonschema>=4.26.0,<5",
@@ -60,6 +61,16 @@ strict = true
 warn_unreachable = true
 plugins = ["pydantic.mypy"]
 files = ["src", "tests", "migrations", "scripts"]
+
+[[tool.mypy.overrides]]
+# Celery and kombu ship no type information.
+module = ["celery", "celery.*", "kombu", "kombu.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# @celery_app.task and signal decorators are untyped; confined to this module.
+module = ["app.jobs.tasks"]
+disallow_untyped_decorators = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
