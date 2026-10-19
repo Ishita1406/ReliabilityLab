@@ -2,7 +2,7 @@
 
 The log is written by the harness (``ToolExecutor`` for tool activity, the agent only via
 ``note``), never assembled by the agent itself, and is kept separate from the final answer.
-It carries everything the trace collector needs to build a ``RunTrace``:
+It carries everything ``app.tracing.TraceCollector`` needs to build the persisted trace:
 
 * ``ToolCallStep`` wraps the benchmark schema's ``ToolCallRecord`` for every call to a
   *registered* tool, including calls rejected for invalid arguments or an exhausted budget.

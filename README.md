@@ -2,10 +2,9 @@
 
 A platform for testing the reliability of AI agents.
 
-This repository currently contains the project foundation only (Milestone 1): a Next.js
-frontend, a FastAPI backend with a health endpoint, and the tooling to lint, format,
-type-check, and test both. There are no databases, queues, agent frameworks, or LLM
-integrations yet.
+The backend contains typed benchmark/domain models, a deterministic research agent with mock
+tools, a scenario runner with fault injection, and PostgreSQL persistence for experiments,
+runs, and structured traces. There is no LLM integration, job queue, or dashboard yet.
 
 ## Repository layout
 
@@ -14,7 +13,7 @@ integrations yet.
 | `frontend/`          | Next.js 16 App Router app (TypeScript, Tailwind CSS 4)         |
 | `backend/`           | FastAPI service (Python 3.13, managed with uv)                 |
 | `docs/engineering/`  | Per-milestone engineering logs                                 |
-| `infra/`             | Reserved for Docker and infrastructure configuration           |
+| `infra/`             | Local infrastructure (`docker-compose.yml`: PostgreSQL 18.6)   |
 | `.env.example`       | Template for environment variables (placeholders only)         |
 
 Frontend and backend are independent projects: each has its own toolchain, lockfile, and
@@ -27,13 +26,19 @@ commands, and neither needs the other to run or be tested.
 | Node.js | 24 LTS       | `frontend/.nvmrc` pins 24.22.0                               |
 | npm     | bundled      | ships with Node                                              |
 | uv      | tested 0.12.3 | installs Python 3.13 automatically (`backend/.python-version`) |
+| Docker  | with Compose v2 | runs the local PostgreSQL (`infra/docker-compose.yml`)       |
 
 ## Quick start
 
 ```bash
+# Database (PostgreSQL on 127.0.0.1:5433)
+docker compose -f infra/docker-compose.yml up -d postgres
+
 # Backend: http://localhost:8000/health
 cd backend
 uv sync --locked
+export APP_DATABASE_URL=postgresql+psycopg://reliabilitylab:reliabilitylab_local_dev@127.0.0.1:5433/reliabilitylab
+uv run alembic upgrade head
 uv run uvicorn app.main:app --reload --port 8000
 
 # Frontend: http://localhost:3000 (in a second terminal)
@@ -54,7 +59,9 @@ npm run dev
 | Tests        | `uv run pytest`                | `npm test`               |
 | Build        | —                              | `npm run build`          |
 
-Automated tests do not use the network or any external service.
+Automated tests do not use the network or any external API. Database tests (`backend/tests/db`)
+need the local PostgreSQL and are skipped, with the reason shown by `pytest -ra`, if it is not
+reachable.
 
 ## Environment variables
 
@@ -66,6 +73,8 @@ git-ignored.
 | ------------------ | -------- | ---------------------------- | ------------------------------------------- |
 | `APP_SERVICE_NAME` | backend  | `ai-reliability-lab-backend` | Service name reported by `/health`          |
 | `APP_ENVIRONMENT`  | backend  | `development`                | `development`, `test`, or `production`      |
+| `APP_DATABASE_URL` | backend  | unset                        | PostgreSQL URL (needed for persistence)     |
+| `APP_TRACE_RETENTION_DAYS` | backend | `30`                | trace retention window (days)               |
 
 ## API
 

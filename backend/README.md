@@ -32,6 +32,7 @@ Interactive API docs are served at <http://localhost:8000/docs>.
 | Type check  | `uv run mypy`               |
 | Tests       | `uv run pytest`             |
 | Schema drift check | `uv run python -m app.domain.schema --check` |
+| Migration drift check | `uv run alembic check` (needs `APP_DATABASE_URL`) |
 
 ## Configuration
 
@@ -42,6 +43,10 @@ if present). See `src/app/config.py` and the root `.env.example`.
 | ------------------ | ----------------------------- | ------------------------------------- |
 | `APP_SERVICE_NAME` | `ai-reliability-lab-backend`  | any string                            |
 | `APP_ENVIRONMENT`  | `development`                 | `development`, `test`, `production`   |
+| `APP_DATABASE_URL` | unset (required for persistence) | SQLAlchemy URL (`postgresql+psycopg://...`) |
+| `APP_TRACE_RETENTION_DAYS` | `30`                  | integer ≥ 1                            |
+| `APP_TEST_DATABASE_URL` | falls back to `APP_DATABASE_URL` | server used for throwaway test databases |
+| `APP_REQUIRE_POSTGRES` | unset                     | `1` makes unreachable-database tests fail |
 
 ## Domain models and benchmark datasets
 
@@ -94,6 +99,32 @@ uv run python -m app.runner.demo --seed 3 search-flaky    # seeded probabilistic
 uv run python -m app.runner.demo --json fetch-misleading  # full ScenarioRunResult JSON
 ```
 
+## Database (PostgreSQL)
+
+Persistence uses PostgreSQL with SQLAlchemy 2.x and Alembic. Start the local database and
+apply migrations:
+
+```bash
+docker compose -f ../infra/docker-compose.yml up -d postgres
+export APP_DATABASE_URL=postgresql+psycopg://reliabilitylab:reliabilitylab_local_dev@127.0.0.1:5433/reliabilitylab
+uv run alembic upgrade head        # apply migrations
+uv run alembic current             # show the applied revision
+uv run alembic check               # fail if models and migrations have drifted
+```
+
+After changing `src/app/db/models.py`, create a migration with
+`uv run alembic revision --autogenerate -m "<change>"`, **review it by hand**, and commit it.
+`alembic.ini` deliberately contains no database URL; `migrations/env.py` reads
+`APP_DATABASE_URL` (or `-x url=...`).
+
+### Database tests
+
+`tests/db/` runs against real PostgreSQL. Each test session creates a throwaway database
+`reliabilitylab_test_<random>` on the server given by `APP_TEST_DATABASE_URL` (default:
+`APP_DATABASE_URL`, then the local compose URL), migrates it, and drops it afterwards; each test
+is rolled back. If the server is unreachable the database tests are **skipped with the reason**
+shown by `uv run pytest -ra`; set `APP_REQUIRE_POSTGRES=1` to make that a failure instead.
+
 ## Layout
 
 ```
@@ -107,6 +138,10 @@ src/app/
   tools/                # tool contract, ToolExecutor, mock search/fetch tools
   agents/               # Agent protocol, deterministic research agent, fixtures, demo CLI
   runner/               # scenario runner, fault injector, synthetic samples, demo CLI
+  tracing/              # trace event schema, collector, redaction/size policy, reconstruction
+  db/                   # SQLAlchemy models, sessions, repositories (suites, runs, reviews)
+  experiments/          # ExperimentService: create + run experiments with persistence
+migrations/             # Alembic environment and revisions
 schemas/                # generated JSON Schema files (committed)
 tests/                  # pytest suite (no network, no external services)
 ```

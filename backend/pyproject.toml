@@ -5,8 +5,11 @@ description = "Backend API for AI Reliability Lab, an AI agent reliability testi
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
 dependencies = [
+    "alembic>=1.20.0,<2",
     "fastapi>=0.146.0,<0.147",
+    "psycopg[binary]>=3.3.6,<4",
     "pydantic-settings>=2.16.0,<3",
+    "sqlalchemy>=2.1.5,<2.2",
     "uvicorn[standard]>=0.54.0,<0.55",
 ]
 
@@ -47,12 +50,16 @@ select = [
     "ANN", # missing type annotations
 ]
 
+[tool.ruff.lint.per-file-ignores]
+# Alembic-generated revisions embed long SQL CHECK expressions verbatim.
+"migrations/versions/*" = ["E501"]
+
 [tool.mypy]
 python_version = "3.13"
 strict = true
 warn_unreachable = true
 plugins = ["pydantic.mypy"]
-files = ["src", "tests"]
+files = ["src", "tests", "migrations"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
