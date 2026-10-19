@@ -7,7 +7,7 @@ import { type ReactNode, useId } from "react";
 
 import type { ApiError } from "@/lib/api/client";
 import type { MetricValue } from "@/lib/api/types";
-import { humanize, metricDetail, metricText } from "@/lib/format";
+import { humanize, metricDetail, metricText, scenarioName } from "@/lib/format";
 
 export function PageHeader({
   title,
@@ -230,6 +230,21 @@ export function TextLink({ href, children }: { href: string; children: ReactNode
     >
       {children}
     </Link>
+  );
+}
+
+/** A scenario's short name with its case underneath: suites with several cases reuse names. */
+export function ScenarioLabel({ scenarioId, caseId }: { scenarioId: string; caseId?: string }) {
+  return (
+    <>
+      <span>{scenarioName(scenarioId, caseId)}</span>
+      {caseId ? (
+        <>
+          {" "}
+          <span className="block text-xs text-zinc-500">{caseId}</span>
+        </>
+      ) : null}
+    </>
   );
 }
 

@@ -28,7 +28,9 @@ def client(sessions: sessionmaker[Session]) -> Iterator[TestClient]:
 
 def test_suites(client: TestClient, seeded: dict[str, str]) -> None:
     suites = {s["id"]: s for s in client.get("/api/suites").json()}
-    assert set(suites) == {"evaluation-samples", "research-agent-sample"}
+    assert set(suites) == {"evaluation-samples", "research-agent-sample", "reliability-demo"}
+    demo = suites["reliability-demo"]
+    assert (demo["version"], demo["case_count"], demo["scenario_count"]) == ("1.0.0", 5, 16)
     suite = suites["evaluation-samples"]
     assert (suite["id"], suite["version"], suite["case_count"], suite["scenario_count"]) == (
         "evaluation-samples",

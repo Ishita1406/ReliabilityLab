@@ -1,7 +1,18 @@
 import type { CalibrationReport, QueueItem } from "@/lib/api/types";
-import { humanize, percent, scenarioName } from "@/lib/format";
+import { humanize, percent } from "@/lib/format";
 
-import { Badge, EmptyState, Missing, Section, StatusBadge, Table, TextLink, td, th } from "./ui";
+import {
+  Badge,
+  EmptyState,
+  Missing,
+  ScenarioLabel,
+  Section,
+  StatusBadge,
+  Table,
+  TextLink,
+  td,
+  th,
+} from "./ui";
 
 export function ReviewQueue({ items }: { items: QueueItem[] }) {
   return (
@@ -27,7 +38,9 @@ export function ReviewQueue({ items }: { items: QueueItem[] }) {
               const open = item.current_reviewers.length < item.required_reviews;
               return (
                 <tr key={item.run_id}>
-                  <td className={td}>{scenarioName(item.scenario_id, item.case_id)}</td>
+                  <td className={td}>
+                    <ScenarioLabel scenarioId={item.scenario_id} caseId={item.case_id} />
+                  </td>
                   <td className={td}>
                     <span className="flex flex-wrap gap-1">
                       {item.reasons.map((reason) => (

@@ -1,14 +1,7 @@
 # AI Reliability Lab
 
-A platform for testing the reliability of AI agents.
-
-The backend contains typed benchmark/domain models, a deterministic research agent with mock
-tools, a scenario runner with fault injection, and PostgreSQL persistence for experiments,
-runs, and structured traces, and a layered evaluation engine with rule-based failure diagnosis
-and an optional Groq-backed LLM judge, plus versioned experiments with case-level comparison and
-configurable regression policies, and an append-only human review workflow with agreement metrics
-for evaluator calibration. There is no job queue, API for results, CI workflow, review UI, or
-dashboard yet.
+A platform for exercising AI agents against versioned benchmarks, retaining execution traces,
+evaluating outcomes, detecting regressions, and collecting human review.
 
 ## Repository layout
 
@@ -17,11 +10,11 @@ dashboard yet.
 | `frontend/`          | Next.js 16 App Router app (TypeScript, Tailwind CSS 4)         |
 | `backend/`           | FastAPI service (Python 3.13, managed with uv)                 |
 | `docs/engineering/`  | Per-milestone engineering logs                                 |
-| `infra/`             | Local infrastructure (`docker-compose.yml`: PostgreSQL 18.6)   |
+| `infra/`             | Local stack (`docker-compose.yml`: Next.js, FastAPI, PostgreSQL, Redis, Celery) |
 | `.env.example`       | Template for environment variables (placeholders only)         |
 
-Frontend and backend are independent projects: each has its own toolchain, lockfile, and
-commands, and neither needs the other to run or be tested.
+The frontend and backend can run independently for development. Docker Compose starts the
+integrated application stack.
 
 ## Prerequisites
 
@@ -30,29 +23,17 @@ commands, and neither needs the other to run or be tested.
 | Node.js | 24 LTS       | `frontend/.nvmrc` pins 24.22.0                               |
 | npm     | bundled      | ships with Node                                              |
 | uv      | tested 0.12.3 | installs Python 3.13 automatically (`backend/.python-version`) |
-| Docker  | with Compose v2 | runs the local PostgreSQL (`infra/docker-compose.yml`)       |
+| Docker  | with Compose v2 | runs the integrated local stack                              |
 
 ## Quick start
 
 ```bash
-# Database (PostgreSQL on 127.0.0.1:5433) and job queue (Redis on 127.0.0.1:6380)
-docker compose -f infra/docker-compose.yml up -d postgres redis
-
-# Backend: http://localhost:8000/health
-cd backend
-uv sync --locked
-export APP_DATABASE_URL=postgresql+psycopg://reliabilitylab:reliabilitylab_local_dev@127.0.0.1:5433/reliabilitylab
-uv run alembic upgrade head
-uv run uvicorn app.main:app --reload --port 8000
-# Background worker (third terminal, in backend/): runs queued experiments
-uv run celery -A app.jobs.celery_app worker --loglevel=INFO
-
-# Frontend: http://localhost:3000 (in a second terminal)
-cd frontend
-nvm use
-npm ci
-npm run dev
+# Integrated production-like stack: http://localhost:3000, API http://localhost:8000
+docker compose -f infra/docker-compose.yml up --build
 ```
+
+For hot reload, start just PostgreSQL and Redis with Compose, then follow the development
+instructions in [backend/README.md](backend/README.md) and [frontend/README.md](frontend/README.md).
 
 ## Checks
 
@@ -65,9 +46,9 @@ npm run dev
 | Tests        | `uv run pytest`                | `npm test`               |
 | Build        | —                              | `npm run build`          |
 
-Automated tests do not use the network or any external API. Database tests (`backend/tests/db`)
-need the local PostgreSQL and are skipped, with the reason shown by `pytest -ra`, if it is not
-reachable.
+Unit tests use deterministic fixtures. Database and worker integration tests require PostgreSQL
+and Redis. The Playwright workflow uses a dedicated `*_e2e` database and a real Celery worker.
+See [Milestone 11 validation notes](docs/engineering/11-validation-and-deployment.md).
 
 ## Environment variables
 
@@ -90,7 +71,8 @@ git-ignored.
 The dashboard API lives under `/api` (overview, suites, experiments, runs with traces and
 diagnosis, comparisons, review queue, calibration, and review submission/correction); the
 schema is committed as `backend/schemas/openapi.json` and interactive docs are at `/docs` when
-the backend runs. **There is no authentication**; run it locally only.
+the backend runs. The local stack has no authentication and is for development only; put a
+trusted authenticated reverse proxy in front before exposing it to users.
 
 `GET /health` returns:
 

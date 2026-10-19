@@ -220,7 +220,11 @@ describe("ComparisonView", () => {
     const newlyFailing = within(cases)
       .getAllByText("newly failing")
       .map((badge) => badge.closest("tr")!.querySelector("td")!.textContent);
-    expect(newlyFailing.sort()).toEqual(["search-malformed-once", "search-timeout-once"]);
+    // The scenario's short name, then its case (suites with several cases reuse short names).
+    expect(newlyFailing.sort()).toEqual([
+      "search-malformed-once runner.lighthouse-year",
+      "search-timeout-once runner.lighthouse-year",
+    ]);
     expect(within(cases).queryByText("unchanged")).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("radio", { name: /^All/ }));

@@ -1,0 +1,11 @@
+{
+  "max_success_rate_drop": 0.0,
+  "max_newly_failing_cases": 0,
+  "fail_on_unauthorized_action": true,
+  "fail_on_security_violation": true,
+  "max_evaluator_uncertainty_rate": 0.0,
+  "max_not_comparable_fraction": 0.0,
+  "allow_suite_change": false,
+  "allow_evaluator_change": false,
+  "unavailable_metric": "fail"
+}

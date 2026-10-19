@@ -1,11 +1,12 @@
 import type { ExperimentMetrics, Overview } from "@/lib/api/types";
-import { dateTime, humanize, metricText, percent, scenarioName, shortId } from "@/lib/format";
+import { dateTime, humanize, metricText, percent, shortId } from "@/lib/format";
 
 import { FailureCategories } from "./failure-categories";
 import {
   EmptyState,
   MetricTile,
   Missing,
+  ScenarioLabel,
   Section,
   StatusBadge,
   Table,
@@ -153,7 +154,9 @@ export function OverviewView({ data }: { data: Overview }) {
                   <td className={`${td} font-mono text-xs`}>
                     <TextLink href={`/runs/${run.run_id}`}>{shortId(run.run_id)}</TextLink>
                   </td>
-                  <td className={td}>{scenarioName(run.scenario_id, run.case_id)}</td>
+                  <td className={td}>
+                    <ScenarioLabel scenarioId={run.scenario_id} caseId={run.case_id} />
+                  </td>
                   <td className={td}>
                     <StatusBadge status={run.status} />
                   </td>

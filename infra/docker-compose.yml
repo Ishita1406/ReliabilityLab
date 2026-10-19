@@ -1,5 +1,5 @@
-# Local development services for AI Reliability Lab.
-#   docker compose -f infra/docker-compose.yml up -d postgres redis
+# Local integrated stack for AI Reliability Lab.
+#   docker compose -f infra/docker-compose.yml up --build
 # Credentials below are LOCAL-ONLY defaults; override them via environment variables.
 # The port is bound to 127.0.0.1 so the database is not reachable from other machines.
 name: reliabilitylab
@@ -35,6 +35,64 @@ services:
       interval: 2s
       timeout: 3s
       retries: 30
+
+  migrate:
+    build:
+      context: ../backend
+    command: ["alembic", "upgrade", "head"]
+    environment: &backend-environment
+      APP_ENVIRONMENT: production
+      APP_DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-reliabilitylab}:${POSTGRES_PASSWORD:-reliabilitylab_local_dev}@postgres:5432/${POSTGRES_DB:-reliabilitylab}
+      APP_REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  backend:
+    build:
+      context: ../backend
+    environment: *backend-environment
+    ports:
+      - "127.0.0.1:${API_PORT:-8000}:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  worker:
+    build:
+      context: ../backend
+    command: ["celery", "-A", "app.jobs.celery_app", "worker", "--loglevel=INFO"]
+    environment: *backend-environment
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ../frontend
+      args:
+        RELIABILITYLAB_API_URL: http://backend:8000
+    environment:
+      RELIABILITYLAB_API_URL: http://backend:8000
+      NEXT_TELEMETRY_DISABLED: "1"
+    ports:
+      - "127.0.0.1:${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
 
 volumes:
   reliabilitylab-pgdata:

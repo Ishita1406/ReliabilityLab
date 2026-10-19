@@ -3,9 +3,19 @@
 import { useMemo, useState } from "react";
 
 import type { ComparisonResponse, MetricComparison, UnitComparison } from "@/lib/api/types";
-import { humanize, metricText, scenarioName } from "@/lib/format";
+import { humanize, metricText } from "@/lib/format";
 
-import { Badge, EmptyState, Missing, Section, StatusBadge, Table, td, th } from "./ui";
+import {
+  Badge,
+  EmptyState,
+  Missing,
+  ScenarioLabel,
+  Section,
+  StatusBadge,
+  Table,
+  td,
+  th,
+} from "./ui";
 
 const STATUS_ORDER = ["newly_failing", "newly_passing", "not_comparable", "unchanged"] as const;
 
@@ -188,7 +198,9 @@ export function ComparisonView({ data }: { data: ComparisonResponse }) {
             <tbody>
               {units.map((unit) => (
                 <tr key={unit.scenario_id}>
-                  <td className={td}>{scenarioName(unit.scenario_id, unit.case_id)}</td>
+                  <td className={td}>
+                    <ScenarioLabel scenarioId={unit.scenario_id} caseId={unit.case_id} />
+                  </td>
                   <td className={td}>
                     <StatusBadge status={unit.status} />
                   </td>

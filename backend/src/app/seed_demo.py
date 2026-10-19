@@ -2,7 +2,8 @@
 
     APP_DATABASE_URL=... uv run python -m app.seed_demo
 
-Registers the SYNTHETIC evaluation suite and agent versions, then creates and runs real
+Registers the SYNTHETIC evaluation suite, the ``reliability-demo`` benchmark, and the agent
+versions, then creates and runs real
 experiments through the normal runner, evaluator, and persistence (nothing is fabricated: every
 stored run, trace, and evaluation was produced by executing the deterministic agent). Every
 experiment name starts with ``[demo]`` and its description says it is synthetic demo data.
@@ -48,6 +49,9 @@ def seed(sessions: sessionmaker[Session]) -> dict[str, str]:
     # The Milestone 2 dataset (5 cases) is registered for browsing only: the deterministic agent
     # cannot run it (Milestone 4 §10), so no experiment is created for it.
     service.register(load_bundled_suite("research-agent-sample", "1.0.0"), CONFIG, BASELINE_VERSION)
+    # The Milestone 11 demo benchmark is registered so it can be run from the dashboard (the
+    # end-to-end golden path creates its experiments through the UI).
+    service.register(load_bundled_suite("reliability-demo", "1.0.0"), CONFIG, BASELINE_VERSION)
     evaluator = Evaluator()
     runner = ScenarioRunner(research_agent_factory)
     created: dict[str, str] = {}

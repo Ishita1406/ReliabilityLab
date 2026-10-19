@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 import type { ExperimentConfiguration, ExperimentDetail } from "@/lib/api/types";
-import { dateTime, humanize, scenarioName } from "@/lib/format";
+import { dateTime, humanize } from "@/lib/format";
 
 import { FailureCategories } from "./failure-categories";
 import { HeadlineMetrics } from "./overview-view";
@@ -10,6 +10,7 @@ import {
   DefinitionList,
   EmptyState,
   Missing,
+  ScenarioLabel,
   Section,
   StatusBadge,
   Table,
@@ -160,7 +161,9 @@ export function ExperimentView({
             <tbody>
               {problems.map((run) => (
                 <tr key={run.run_id}>
-                  <td className={td}>{scenarioName(run.scenario_id, run.case_id)}</td>
+                  <td className={td}>
+                    <ScenarioLabel scenarioId={run.scenario_id} caseId={run.case_id} />
+                  </td>
                   <td className={td}>
                     <StatusBadge status={run.verdict} />
                   </td>

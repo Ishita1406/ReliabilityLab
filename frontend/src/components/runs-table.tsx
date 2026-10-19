@@ -3,9 +3,9 @@
 import { useMemo, useState } from "react";
 
 import type { RunSummary } from "@/lib/api/types";
-import { humanize, percent, scenarioName, seconds, shortId } from "@/lib/format";
+import { humanize, percent, seconds, shortId } from "@/lib/format";
 
-import { EmptyState, Missing, StatusBadge, Table, TextLink, td, th } from "./ui";
+import { EmptyState, Missing, ScenarioLabel, StatusBadge, Table, TextLink, td, th } from "./ui";
 
 type RunSort = "scenario" | "duration" | "score";
 
@@ -86,7 +86,9 @@ export function RunsTable({ runs }: { runs: RunSummary[] }) {
         <tbody>
           {rows.map((run) => (
             <tr key={run.run_id}>
-              <td className={td}>{scenarioName(run.scenario_id, run.case_id)}</td>
+              <td className={td}>
+                <ScenarioLabel scenarioId={run.scenario_id} caseId={run.case_id} />
+              </td>
               <td className={`${td} tabular-nums`}>{run.repetition}</td>
               <td className={td}>
                 <StatusBadge status={run.status} />

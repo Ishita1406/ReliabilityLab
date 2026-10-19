@@ -1,0 +1,144 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18.6-alpine
+        env:
+          POSTGRES_USER: reliabilitylab
+          POSTGRES_PASSWORD: reliabilitylab_local_dev
+          POSTGRES_DB: reliabilitylab
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -U reliabilitylab -d reliabilitylab"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+      redis:
+        image: redis:8.6.7-alpine
+        ports: [6379:6379]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+    env:
+      APP_DATABASE_URL: postgresql+psycopg://reliabilitylab:reliabilitylab_local_dev@127.0.0.1:5432/reliabilitylab
+      APP_TEST_DATABASE_URL: postgresql+psycopg://reliabilitylab:reliabilitylab_local_dev@127.0.0.1:5432/reliabilitylab
+      APP_REQUIRE_POSTGRES: "1"
+      APP_REDIS_URL: redis://127.0.0.1:6379/0
+      APP_TEST_REDIS_URL: redis://127.0.0.1:6379/15
+      APP_REQUIRE_REDIS: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: 0.12.3
+          python-version: "3.13"
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+      - run: uv sync --locked
+        working-directory: backend
+      - run: uv run ruff check .
+        working-directory: backend
+      - run: uv run ruff format --check .
+        working-directory: backend
+      - run: uv run mypy
+        working-directory: backend
+      - run: uv run python -m app.domain.schema --check
+        working-directory: backend
+      - run: uv run python -m app.api.openapi_export --check
+        working-directory: backend
+      - run: uv run alembic upgrade head && uv run alembic check
+        working-directory: backend
+      - run: uv run pytest -ra
+        working-directory: backend
+      - name: Regression baseline check
+        run: >-
+          uv run python -m app.experiments.regression_check
+          --suite reliability-demo@1.0.0 --agent baseline
+          --baseline baselines/reliability-demo-1.0.0.json
+          --policy baselines/ci-policy.json
+        working-directory: backend
+      - name: Build backend image
+        run: docker build -t reliabilitylab-backend backend
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.22.0
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        working-directory: frontend
+      - run: npm test
+        working-directory: frontend
+      - run: npm run lint
+        working-directory: frontend
+      - run: npm run format:check
+        working-directory: frontend
+      - run: npm run typecheck
+        working-directory: frontend
+      - run: npm run api:types:check
+        working-directory: frontend
+      - run: npm run build
+        working-directory: frontend
+      - run: docker build -t reliabilitylab-frontend frontend
+
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18.6-alpine
+        env:
+          POSTGRES_USER: reliabilitylab
+          POSTGRES_PASSWORD: reliabilitylab_local_dev
+          POSTGRES_DB: reliabilitylab
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -U reliabilitylab -d reliabilitylab"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+      redis:
+        image: redis:8.6.7-alpine
+        ports: [6379:6379]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+    env:
+      E2E_DATABASE_URL: postgresql+psycopg://reliabilitylab:reliabilitylab_local_dev@127.0.0.1:5432/reliabilitylab_e2e
+      E2E_REDIS_URL: redis://127.0.0.1:6379/14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.22.0
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: 0.12.3
+          python-version: "3.13"
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+      - run: uv sync --locked
+        working-directory: backend
+      - run: npm ci
+        working-directory: frontend
+      - run: npx playwright install --with-deps chromium
+        working-directory: frontend
+      - run: npm run test:e2e
+        working-directory: frontend
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results
+          path: frontend/test-results/
+          if-no-files-found: ignore
