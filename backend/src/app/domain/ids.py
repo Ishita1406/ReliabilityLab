@@ -6,8 +6,9 @@ Two kinds of identifiers are used:
   criteria, faults, tags, tools). They are chosen by dataset authors and stay stable across
   dataset versions, so results for ``research.fact-lookup`` remain comparable over time.
 * **Generated IDs** identify runtime entities (agents, experiments, runs, trace events, ...).
-  They have the form ``<prefix>_<32 lowercase hex chars>`` (a UUID4). The prefix is validated,
-  so passing a run ID where an experiment ID is expected fails validation.
+  They have the form ``<prefix>_<32 lowercase hex chars>``: a random UUID4 from ``new_id``, or a
+  name-based UUID5 from ``derived_id`` when the same inputs must always yield the same ID.
+  The prefix is validated, so passing a run ID where an experiment ID is expected fails.
 """
 
 import re
@@ -53,6 +54,18 @@ ReviewAnnotationId = Annotated[str, StringConstraints(pattern=rf"^rev_{_HEX32}$"
 def new_id(prefix: IdPrefix) -> str:
     """Generate a new random identifier for the given entity prefix."""
     return f"{prefix.value}_{uuid.uuid4().hex}"
+
+
+_DERIVED_ID_NAMESPACE = uuid.UUID("6f0d2c4e-8a59-4c1e-9a43-2f7b1d5e8c90")
+
+
+def derived_id(prefix: IdPrefix, *parts: str) -> str:
+    """Deterministic identifier derived from ``parts`` (e.g. a run ID and a call index).
+
+    Used where re-running the same inputs must produce byte-identical records.
+    """
+    name = "\x1f".join(parts)
+    return f"{prefix.value}_{uuid.uuid5(_DERIVED_ID_NAMESPACE, name).hex}"
 
 
 def prefix_of(identifier: str) -> IdPrefix | None:

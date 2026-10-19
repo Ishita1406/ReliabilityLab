@@ -61,6 +61,23 @@ uv run python -m app.domain.schema          # regenerate after changing models
 uv run python -m app.domain.schema --check  # exit 1 if committed schemas are stale
 ```
 
+## Agents and mock tools
+
+`src/app/agents/interface.py` defines the provider-independent `Agent` protocol. Agents call
+tools only through `ToolExecutor` (`src/app/tools/executor.py`), which validates arguments and
+outputs, returns structured `ToolError`s, and records every call. The harness function
+`run_agent()` attaches the recorded execution log to the agent's answer. See
+[docs/engineering/03-agent-interface.md](../docs/engineering/03-agent-interface.md).
+
+`DeterministicResearchAgent` (no LLM) runs against mock `search_documents` / `fetch_document`
+tools over a **synthetic** corpus. Example executions:
+
+```bash
+uv run python -m app.agents.demo                         # all fixtures, summarised
+uv run python -m app.agents.demo tool-timeout            # one fixture
+uv run python -m app.agents.demo --json missing-document # full AgentResult JSON
+```
+
 ## Layout
 
 ```
@@ -70,6 +87,9 @@ src/app/
   api/health.py         # GET /health
   domain/               # Pydantic domain models, enums, IDs, timestamps, schema export
   benchmarks/           # dataset loader + bundled datasets (package data)
+  runtime/              # Clock abstraction, execution log recorder
+  tools/                # tool contract, ToolExecutor, mock search/fetch tools
+  agents/               # Agent protocol, deterministic research agent, fixtures, demo CLI
 schemas/                # generated JSON Schema files (committed)
 tests/                  # pytest suite (no network, no external services)
 ```
