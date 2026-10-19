@@ -29,6 +29,7 @@ from app.domain.base import DomainModel
 from app.domain.enums import AgentOutcome
 from app.domain.experiment import Experiment, Run, RunError
 from app.domain.ids import RunId
+from app.experiments.configuration import ExperimentConfiguration
 from app.runner.runner import ScenarioRunResult, TerminationReason
 from app.runtime.limits import LimitKind
 from app.tracing.policy import DEFAULT_POLICY, TracePayloadPolicy, sanitize
@@ -46,7 +47,28 @@ class TraceMismatchError(ValueError):
 # --- experiments ------------------------------------------------------------------------------
 
 
-def create_experiment(session: Session, experiment: Experiment) -> ExperimentRow:
+def create_experiment(
+    session: Session, experiment: Experiment, configuration: ExperimentConfiguration
+) -> ExperimentRow:
+    """Store an experiment with its (immutable) configuration snapshot."""
+    expected = (
+        experiment.suite_id,
+        experiment.suite_version,
+        experiment.agent_version_id,
+        experiment.scenario_ids,
+        experiment.repetitions,
+        experiment.seed,
+    )
+    recorded = (
+        configuration.suite_id,
+        configuration.suite_version,
+        configuration.agent_version.id,
+        configuration.scenario_ids,
+        configuration.repetitions,
+        configuration.seed,
+    )
+    if expected != recorded:
+        raise ValueError("experiment and configuration snapshot disagree")
     suite_row = find_suite_row(session, experiment.suite_id, experiment.suite_version)
     if suite_row is None:
         raise NotFoundError(
@@ -64,6 +86,9 @@ def create_experiment(session: Session, experiment: Experiment) -> ExperimentRow
         created_at=experiment.created_at,
         started_at=experiment.started_at,
         finished_at=experiment.finished_at,
+        evaluator_version=configuration.evaluator_version,
+        configuration=configuration.model_dump(mode="json"),
+        configuration_sha256=configuration.fingerprint,
     )
     session.add(row)
     session.flush()
@@ -109,6 +134,21 @@ def load_experiment(session: Session, experiment_id: str) -> Experiment:
         started_at=row.started_at,
         finished_at=row.finished_at,
     )
+
+
+def load_experiment_configuration(
+    session: Session, experiment_id: str
+) -> ExperimentConfiguration | None:
+    """The snapshot, verified against its stored hash; ``None`` for pre-snapshot experiments."""
+    row = session.get(ExperimentRow, experiment_id)
+    if row is None:
+        raise NotFoundError(f"experiment '{experiment_id}' not found")
+    if row.configuration is None:
+        return None
+    configuration = ExperimentConfiguration.model_validate(row.configuration)
+    if configuration.fingerprint != row.configuration_sha256:
+        raise ValueError(f"configuration of experiment '{experiment_id}' fails its hash check")
+    return configuration
 
 
 def update_experiment_state(session: Session, experiment: Experiment) -> None:

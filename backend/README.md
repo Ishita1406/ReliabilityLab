@@ -122,6 +122,24 @@ uv run python -m app.evaluation.demo --json search-empty    # CaseEvaluation + D
 APP_JUDGE_PROVIDER=groq GROQ_API_KEY=... uv run python -m app.evaluation.demo --judge  # uses Groq
 ```
 
+## Experiments, versioning, and regression detection
+
+An experiment records an immutable configuration snapshot (suite version and content hash,
+per-scenario fingerprints, agent version, agent implementation, limits, repetitions, seed,
+evaluator version). `ExperimentService.run_experiment(experiment_id, runner, evaluator)` stores
+each run with its trace and its evaluation. `app.experiments.comparison.compare` compares two
+experiments case by case; `app.experiments.policy.evaluate_policy` applies a `RegressionPolicy`.
+See [docs/engineering/07-experiments-and-regressions.md](../docs/engineering/07-experiments-and-regressions.md).
+
+```bash
+uv run python -m app.experiments.demo no-retry               # offline: baseline vs a variant
+uv run python -m app.experiments.demo slow-backoff --repetitions 2 --policy policy.json
+uv run python -m app.experiments.compare EXP_A EXP_B --policy policy.json   # stored experiments
+```
+
+Both exit 0 when the policy passes and 1 on a regression; `compare` exits 2 when the experiments
+cannot be compared (unknown ID, no configuration snapshot, invalid policy file).
+
 ## Database (PostgreSQL)
 
 Persistence uses PostgreSQL with SQLAlchemy 2.x and Alembic. Start the local database and
@@ -167,8 +185,8 @@ src/app/
   runner/               # scenario runner, fault injector, synthetic samples, demo CLI
   tracing/              # trace event schema, collector, redaction/size policy, reconstruction
   db/                   # SQLAlchemy models, sessions, repositories (suites, runs, reviews)
-  experiments/          # ExperimentService: create + run experiments with persistence
   evaluation/           # evaluation engine, checks, LLM judge (Groq), diagnosis, demo CLI
+  experiments/          # snapshots, executor, metrics, comparison, regression policy, CLIs
 migrations/             # Alembic environment and revisions
 schemas/                # generated JSON Schema files (committed)
 tests/                  # pytest suite (no network, no external services)

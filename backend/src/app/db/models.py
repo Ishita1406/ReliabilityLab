@@ -58,6 +58,7 @@ from app.domain.enums import (
     Severity,
 )
 from app.domain.ids import SLUG_PATTERN
+from app.evaluation.models import Verdict
 from app.runner.runner import TerminationReason
 from app.runtime.limits import LimitKind
 from app.tracing.schema import EventKind, EventStatus
@@ -274,6 +275,11 @@ class ExperimentRow(Base):
         UniqueConstraint("id", "agent_version_id"),  # target of composite FKs
         CheckConstraint("repetitions >= 1 AND seed >= 0", name="positive_settings"),
         CheckConstraint(
+            "(configuration IS NULL) = (configuration_sha256 IS NULL) AND "
+            "(configuration IS NULL) = (evaluator_version IS NULL)",
+            name="configuration_complete",
+        ),
+        CheckConstraint(
             "(started_at IS NULL OR started_at >= created_at) AND "
             "(finished_at IS NULL OR finished_at >= COALESCE(started_at, created_at))",
             name="timestamp_order",
@@ -297,6 +303,12 @@ class ExperimentRow(Base):
     created_at: Created
     started_at: Mapped[datetime | None]
     finished_at: Mapped[datetime | None]
+    # Milestone 7: immutable configuration snapshot (NULL for experiments created before it).
+    evaluator_version: Mapped[str | None] = mapped_column(Text)
+    configuration: Mapped[dict[str, Any] | None] = mapped_column(
+        NullableJSONB, comment="ExperimentConfiguration snapshot (app.experiments.configuration)."
+    )
+    configuration_sha256: Mapped[str | None] = mapped_column(String(64))
 
 
 class ExperimentScenarioRow(Base):
@@ -468,6 +480,30 @@ class TraceEventRow(Base):
 
 
 # --- evaluation and review -------------------------------------------------------------------
+
+
+class RunEvaluationRow(Base):
+    """A run's Milestone 6 ``CaseEvaluation`` (full document) per evaluator version."""
+
+    __tablename__ = "run_evaluations"
+    __table_args__ = (
+        enum_check("verdict", Verdict),
+        CheckConstraint("score >= 0 AND score <= 1", name="score_range"),
+        ForeignKeyConstraint(
+            ["run_id", "experiment_id"],
+            ["runs.id", "runs.experiment_id"],
+            ondelete="CASCADE",
+            name="fk_run_evaluations_run_of_experiment",
+        ),
+    )
+
+    run_id: Mapped[str] = mapped_column(Text, primary_key=True)
+    evaluator_version: Mapped[str] = mapped_column(Text, primary_key=True)
+    experiment_id: Mapped[str] = mapped_column(Text, index=True)
+    verdict: Mapped[Verdict] = mapped_column(enum_type(Verdict, "verdict"), index=True)
+    score: Mapped[float] = mapped_column(Double)
+    evaluation: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    created_at: Created
 
 
 class EvaluationResultRow(Base):

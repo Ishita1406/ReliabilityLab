@@ -27,8 +27,8 @@ from app.domain.evaluation import CriterionResult, EvaluationResult, FailureClas
 from app.domain.ids import IdPrefix, new_id
 from app.domain.review import HumanReviewAnnotation
 from app.runner.runner import ScenarioRunner
-from app.runner.samples import SAMPLE_AGENT_VERSION, SAMPLE_LIMITS, deterministic_research_agent
-from tests.db.helpers import SAMPLE_SUITE, make_service, scenario_ids
+from app.runner.samples import SAMPLE_AGENT_VERSION, deterministic_research_agent
+from tests.db.helpers import EVALUATOR, SAMPLE_SUITE, make_service, scenario_ids, versioning
 
 WHEN = datetime(2026, 3, 1, tzinfo=UTC)
 
@@ -44,9 +44,10 @@ def run_id(sessions: sessionmaker[Session]) -> str:
         agent_version_id=SAMPLE_AGENT_VERSION.id,
         repetitions=1,
         seed=0,
+        **versioning(),
     )
     (stored_run,) = service.run_experiment(
-        experiment.id, ScenarioRunner(deterministic_research_agent), SAMPLE_LIMITS
+        experiment.id, ScenarioRunner(deterministic_research_agent), EVALUATOR
     )
     return stored_run
 

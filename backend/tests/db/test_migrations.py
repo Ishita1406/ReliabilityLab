@@ -26,7 +26,7 @@ def test_upgrade_matches_models_and_downgrade_is_clean(
             version = connection.execute(text("SELECT version_num FROM alembic_version")).scalar()
         assert diff == []
         assert tables == set(Base.metadata.tables) | {"alembic_version"}
-        assert version == "0002"
+        assert version == "0003"
 
         command.downgrade(config, "base")
         with engine.connect() as connection:
@@ -66,6 +66,8 @@ def test_check_constraints_and_generated_column_exist(
         "ck_trace_events_root_iff_run",
         "ck_review_annotations_single_matching_target",
         "ck_runs_status_values",
+        "ck_experiments_configuration_complete",
+        "ck_run_evaluations_verdict_values",
     } <= checks
     assert generated == "ALWAYS"
 

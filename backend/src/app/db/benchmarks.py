@@ -5,10 +5,7 @@ Registration is idempotent: saving content that already exists returns the exist
 versions and agent versions are immutable once runs may reference them.
 """
 
-import hashlib
-import json
-
-from pydantic import BaseModel, TypeAdapter
+from pydantic import TypeAdapter
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -23,6 +20,7 @@ from app.db.models import (
 from app.domain.agent import AgentConfig, AgentParameters, AgentVersion, ModelSpec
 from app.domain.benchmark import BenchmarkSuite
 from app.domain.faults import FaultConfig
+from app.domain.hashing import content_sha256
 
 _FAULT = TypeAdapter(FaultConfig)
 _FAULT_COMMON_FIELDS = {"id", "type", "target_tool", "apply_on_calls", "probability"}
@@ -34,16 +32,6 @@ class ContentConflictError(Exception):
 
 class NotFoundError(LookupError):
     """A referenced row does not exist."""
-
-
-def canonical_json(model: BaseModel) -> str:
-    """Key-sorted, compact JSON. JSONB does not preserve object key order, so hashes must not
-    depend on it: content loaded back from PostgreSQL must hash identically."""
-    return json.dumps(model.model_dump(mode="json"), sort_keys=True, separators=(",", ":"))
-
-
-def content_sha256(model: BaseModel) -> str:
-    return hashlib.sha256(canonical_json(model).encode("utf-8")).hexdigest()
 
 
 # --- suites ---------------------------------------------------------------------------------

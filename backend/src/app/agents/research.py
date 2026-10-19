@@ -223,6 +223,7 @@ class DeterministicResearchAgent:
         return AgentOutput(
             answer=answer,
             metadata=AgentRunMetadata(
+                usage=[],  # no language model: known zero usage, not unknown
                 stop_reason=stop_reason,
                 evidence_status=status,
                 evidence=evidence,
@@ -245,6 +246,7 @@ class DeterministicResearchAgent:
                 declared_outcome=AgentOutcome.TASK_FAILED,
             ),
             metadata=AgentRunMetadata(
+                usage=[],  # no language model: known zero usage, not unknown
                 stop_reason=StopReason.BUDGET_EXHAUSTED
                 if error.code is ToolErrorCode.BUDGET_EXHAUSTED
                 else StopReason.TOOL_FAILURE,

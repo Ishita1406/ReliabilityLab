@@ -35,21 +35,36 @@ from app.domain.enums import (
     RunStatus,
 )
 from app.domain.review import HumanReviewAnnotation
-from app.experiments.service import ExperimentService, ExperimentStateError, run_seed
+from app.experiments.executor import run_seed
+from app.experiments.service import ExperimentService, ExperimentStateError
 from app.runner.runner import RunRequest, ScenarioRunner, ScenarioRunResult, TerminationReason
 from app.runner.samples import SAMPLE_AGENT_VERSION, SAMPLE_LIMITS, deterministic_research_agent
 from app.runtime.limits import ExecutionLimits
 from app.tracing.collector import TraceCollector
 from app.tracing.reconstruct import tool_calls
 from app.tracing.schema import CollectedTrace, EventKind
-from tests.db.helpers import SAMPLE_CONFIG, SAMPLE_SUITE, make_service, scenario_ids
+from tests.db.helpers import (
+    DETERMINISTIC_AGENT,
+    EVALUATOR,
+    SAMPLE_CONFIG,
+    SAMPLE_SUITE,
+    make_service,
+    scenario_ids,
+    versioning,
+)
 
 RUNNER = ScenarioRunner(deterministic_research_agent)
 ALL_SCENARIOS = [s.id for s in SAMPLE_SUITE.scenarios]
 
 
 def create(
-    service: ExperimentService, scenarios: list[str], repetitions: int = 1, seed: int = 0
+    service: ExperimentService,
+    scenarios: list[str],
+    repetitions: int = 1,
+    seed: int = 0,
+    *,
+    limits: ExecutionLimits = SAMPLE_LIMITS,
+    agent: AgentDescriptor = DETERMINISTIC_AGENT,
 ) -> str:
     return service.create_experiment(
         name="persistence test",
@@ -59,6 +74,7 @@ def create(
         agent_version_id=SAMPLE_AGENT_VERSION.id,
         repetitions=repetitions,
         seed=seed,
+        **versioning(limits, agent),
     ).id
 
 
@@ -94,7 +110,7 @@ def test_experiment_runs_are_stored_with_reconstructable_traces(
     service = make_service(sessions)
     experiment_id = create(service, ALL_SCENARIOS, repetitions=2, seed=5)
 
-    run_ids = service.run_experiment(experiment_id, RUNNER, SAMPLE_LIMITS)
+    run_ids = service.run_experiment(experiment_id, RUNNER, EVALUATOR)
 
     assert len(run_ids) == len(ALL_SCENARIOS) * 2
     assert sorted(list_run_ids(session, experiment_id)) == sorted(run_ids)
@@ -117,7 +133,7 @@ def test_trace_rows_preserve_order_parents_and_durations(
 ) -> None:
     service = make_service(sessions)
     experiment_id = create(service, scenario_ids("fetch-rate-limited"))
-    (run_id,) = service.run_experiment(experiment_id, RUNNER, SAMPLE_LIMITS)
+    (run_id,) = service.run_experiment(experiment_id, RUNNER, EVALUATOR)
 
     rows = session.scalars(
         select(TraceEventRow).where(TraceEventRow.run_id == run_id).order_by(TraceEventRow.sequence)
@@ -140,10 +156,10 @@ def test_trace_rows_preserve_order_parents_and_durations(
 def test_running_an_experiment_twice_is_refused(sessions: sessionmaker[Session]) -> None:
     service = make_service(sessions)
     experiment_id = create(service, scenario_ids("baseline"))
-    service.run_experiment(experiment_id, RUNNER, SAMPLE_LIMITS)
+    service.run_experiment(experiment_id, RUNNER, EVALUATOR)
 
     with pytest.raises(ExperimentStateError, match="not pending"):
-        service.run_experiment(experiment_id, RUNNER, SAMPLE_LIMITS)
+        service.run_experiment(experiment_id, RUNNER, EVALUATOR)
 
 
 def test_repeated_experiments_store_independent_identical_runs(
@@ -153,8 +169,8 @@ def test_repeated_experiments_store_independent_identical_runs(
     first = create(service, scenario_ids("fetch-misleading"), seed=9)
     second = create(service, scenario_ids("fetch-misleading"), seed=9)
 
-    (run_a,) = service.run_experiment(first, RUNNER, SAMPLE_LIMITS)
-    (run_b,) = service.run_experiment(second, RUNNER, SAMPLE_LIMITS)
+    (run_a,) = service.run_experiment(first, RUNNER, EVALUATOR)
+    (run_b,) = service.run_experiment(second, RUNNER, EVALUATOR)
 
     assert run_a != run_b
     stored_a, stored_b = load_run(session, run_a), load_run(session, run_b)
@@ -194,9 +210,9 @@ def test_failed_runs_are_persisted_with_trace_and_without_answer(
     reason: TerminationReason,
 ) -> None:
     service = make_service(sessions)
-    experiment_id = create(service, scenario_ids(scenario))
+    experiment_id = create(service, scenario_ids(scenario), limits=limits)
 
-    (run_id,) = service.run_experiment(experiment_id, RUNNER, limits)
+    (run_id,) = service.run_experiment(experiment_id, RUNNER, EVALUATOR)
 
     stored = load_run(session, run_id)
     assert stored.run.status is status
@@ -230,10 +246,10 @@ def test_errored_runs_are_persisted_and_secrets_never_reach_the_database(
     sessions: sessionmaker[Session], session: Session
 ) -> None:
     service = make_service(sessions)
-    experiment_id = create(service, scenario_ids("baseline"))
+    experiment_id = create(service, scenario_ids("baseline"), agent=_CrashingAgent().descriptor)
 
     (run_id,) = service.run_experiment(
-        experiment_id, ScenarioRunner(lambda _v: _CrashingAgent()), SAMPLE_LIMITS
+        experiment_id, ScenarioRunner(lambda _v: _CrashingAgent()), EVALUATOR
     )
 
     stored = load_run(session, run_id)
@@ -266,9 +282,10 @@ def test_bundled_dataset_cases_without_agent_variables_persist_as_errored(
         agent_version_id=SAMPLE_AGENT_VERSION.id,
         repetitions=1,
         seed=0,
+        **versioning(),
     )
 
-    (run_id,) = service.run_experiment(experiment.id, RUNNER, SAMPLE_LIMITS)
+    (run_id,) = service.run_experiment(experiment.id, RUNNER, EVALUATOR)
 
     stored = load_run(session, run_id)
     assert stored.run.status is RunStatus.ERRORED
@@ -319,7 +336,7 @@ def test_failure_mid_experiment_keeps_committed_runs_and_marks_experiment_failed
     monkeypatch.setattr(TraceCollector, "collect", failing_collect)
 
     with pytest.raises(RuntimeError, match="simulated collector failure"):
-        service.run_experiment(experiment_id, RUNNER, SAMPLE_LIMITS)
+        service.run_experiment(experiment_id, RUNNER, EVALUATOR)
 
     assert len(list_run_ids(session, experiment_id)) == 1
     row = session.get(ExperimentRow, experiment_id)
@@ -332,7 +349,7 @@ def test_storing_the_same_run_twice_is_refused_without_side_effects(
 ) -> None:
     service = make_service(sessions)
     experiment_id = create(service, scenario_ids("baseline"))
-    (run_id,) = service.run_experiment(experiment_id, RUNNER, SAMPLE_LIMITS)
+    (run_id,) = service.run_experiment(experiment_id, RUNNER, EVALUATOR)
     result, trace = expected_result(experiment_id, scenario_ids("baseline")[0], 0, 0)
     events_before = session.scalar(select(func.count()).select_from(TraceEventRow))
 
@@ -351,7 +368,7 @@ def test_purge_removes_old_traces_but_keeps_runs_and_reviewed_traces(
 ) -> None:
     service = make_service(sessions)
     experiment_id = create(service, scenario_ids("baseline", "fetch-misleading"))
-    reviewed_run, purged_run = service.run_experiment(experiment_id, RUNNER, SAMPLE_LIMITS)
+    reviewed_run, purged_run = service.run_experiment(experiment_id, RUNNER, EVALUATOR)
     reviewed_event = load_trace(session, reviewed_run).events[-1]
     with sessions.begin() as tx:
         save_review(
@@ -395,7 +412,7 @@ def test_retention_window_is_applied_relative_to_now(
 ) -> None:
     service = make_service(sessions)
     experiment_id = create(service, scenario_ids("baseline"))
-    (run_id,) = service.run_experiment(experiment_id, RUNNER, SAMPLE_LIMITS)
+    (run_id,) = service.run_experiment(experiment_id, RUNNER, EVALUATOR)
     finished = load_run(session, run_id).run.finished_at
     assert finished is not None
 

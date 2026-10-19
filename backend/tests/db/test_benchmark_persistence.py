@@ -10,7 +10,6 @@ from app.benchmarks.loader import load_bundled_suite
 from app.db.benchmarks import (
     ContentConflictError,
     NotFoundError,
-    canonical_json,
     load_agent_version,
     load_suite,
     save_agent,
@@ -25,8 +24,9 @@ from app.db.models import (
 )
 from app.db.runs import load_experiment
 from app.domain.benchmark import BenchmarkSuite
+from app.domain.hashing import canonical_json
 from app.runner.samples import SAMPLE_AGENT_VERSION
-from tests.db.helpers import SAMPLE_CONFIG, SAMPLE_SUITE, make_service, scenario_ids
+from tests.db.helpers import SAMPLE_CONFIG, SAMPLE_SUITE, make_service, scenario_ids, versioning
 
 
 @pytest.mark.parametrize(
@@ -122,6 +122,7 @@ def test_repeated_experiment_creation_yields_distinct_experiments(
             agent_version_id=SAMPLE_AGENT_VERSION.id,
             repetitions=2,
             seed=1,
+            **versioning(),
         )
         for _ in range(3)
     ]
@@ -145,4 +146,5 @@ def test_experiment_with_unknown_scenario_is_refused(sessions: sessionmaker[Sess
             agent_version_id=SAMPLE_AGENT_VERSION.id,
             repetitions=1,
             seed=0,
+            **versioning(),
         )

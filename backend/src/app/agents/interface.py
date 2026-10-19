@@ -22,7 +22,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Protocol, Self
 
-from pydantic import Field, model_validator
+from pydantic import Field, NonNegativeInt, model_validator
 
 from app.domain.base import DomainModel, NonEmptyStr, require_unique
 from app.domain.benchmark import CITATION_PATTERN, ScalarValue, TaskInputs
@@ -94,8 +94,22 @@ class EvidenceItem(DomainModel):
     excerpt: NonEmptyStr | None = None
 
 
+class ModelUsage(DomainModel):
+    """Tokens one model consumed during a run (summed over its calls)."""
+
+    provider: Slug
+    model: NonEmptyStr
+    input_tokens: NonNegativeInt
+    output_tokens: NonNegativeInt
+
+
 class AgentRunMetadata(DomainModel):
     stop_reason: StopReason
+    usage: list[ModelUsage] | None = Field(
+        default=None,
+        description="Model usage. null means unknown (not reported); [] means the agent made "
+        "no model calls. Never read null as zero.",
+    )
     evidence_status: EvidenceStatus | None = None
     evidence: list[EvidenceItem] = Field(default_factory=list)
     unretrieved_source_ids: list[Slug] = Field(default_factory=list)

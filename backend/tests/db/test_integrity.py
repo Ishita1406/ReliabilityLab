@@ -19,8 +19,8 @@ from app.db.models import (
 from app.db.runs import load_trace
 from app.domain.ids import IdPrefix, new_id
 from app.runner.runner import ScenarioRunner
-from app.runner.samples import SAMPLE_AGENT_VERSION, SAMPLE_LIMITS, deterministic_research_agent
-from tests.db.helpers import SAMPLE_SUITE, make_service, scenario_ids
+from app.runner.samples import SAMPLE_AGENT_VERSION, deterministic_research_agent
+from tests.db.helpers import EVALUATOR, SAMPLE_SUITE, make_service, scenario_ids, versioning
 
 
 @pytest.fixture
@@ -37,9 +37,10 @@ def stored(sessions: sessionmaker[Session]) -> dict[str, str]:
             agent_version_id=SAMPLE_AGENT_VERSION.id,
             repetitions=1,
             seed=0,
+            **versioning(),
         )
         (run_id,) = service.run_experiment(
-            experiment.id, ScenarioRunner(deterministic_research_agent), SAMPLE_LIMITS
+            experiment.id, ScenarioRunner(deterministic_research_agent), EVALUATOR
         )
         ids[f"experiment_{key}"] = experiment.id
         ids[f"run_{key}"] = run_id

@@ -3,8 +3,9 @@
 Transaction boundaries:
 
 * registering content and creating an experiment: one transaction each;
-* every run: ``runner.run`` (in memory) -> ``TraceCollector.collect`` -> one transaction that
-  writes the run row and all of its trace events. A run is stored with its trace or not at all;
+* every run: ``runner.run`` (in memory) -> ``TraceCollector.collect`` -> ``Evaluator.evaluate``
+  -> one transaction that writes the run row, all of its trace events, and its evaluation. A
+  run is stored with its trace and evaluation or not at all;
 * experiment status transitions (pending -> running -> completed / failed): their own short
   transactions, so a failure while running leaves the experiment visibly ``failed`` with the
   runs that were committed before it.
@@ -15,15 +16,30 @@ from datetime import datetime
 
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.db.benchmarks import load_agent_version, load_suite, save_agent, save_suite
-from app.db.runs import create_experiment, load_experiment, save_run, update_experiment_state
+from app.agents.interface import AgentDescriptor
+from app.db.benchmarks import NotFoundError, load_agent_version, load_suite, save_agent, save_suite
+from app.db.evaluations import save_run_evaluation
+from app.db.runs import (
+    create_experiment,
+    load_experiment,
+    load_experiment_configuration,
+    save_run,
+    update_experiment_state,
+)
 from app.domain.agent import AgentConfig, AgentVersion
 from app.domain.benchmark import BenchmarkSuite
 from app.domain.enums import ExperimentStatus
 from app.domain.experiment import Experiment
 from app.domain.timestamps import utc_now
-from app.runner.fault_injection import derive_seed
-from app.runner.runner import RunRequest, ScenarioRunner
+from app.evaluation.engine import Evaluator
+from app.experiments.configuration import ExperimentConfiguration
+from app.experiments.executor import (
+    ExperimentConfigurationError,
+    check_inputs,
+    execute,
+    planned_requests,
+)
+from app.runner.runner import ScenarioRunner
 from app.runtime.limits import ExecutionLimits
 from app.tracing.collector import TraceCollector
 from app.tracing.policy import DEFAULT_POLICY, TracePayloadPolicy
@@ -31,11 +47,6 @@ from app.tracing.policy import DEFAULT_POLICY, TracePayloadPolicy
 
 class ExperimentStateError(RuntimeError):
     """The experiment is not in a state that allows the requested operation."""
-
-
-def run_seed(experiment_seed: int, scenario_id: str, repetition: int) -> int:
-    """Per-run seed, stable for a given experiment seed, scenario, and repetition."""
-    return derive_seed(experiment_seed, scenario_id, str(repetition))
 
 
 class ExperimentService:
@@ -67,8 +78,12 @@ class ExperimentService:
         agent_version_id: str,
         repetitions: int,
         seed: int,
+        limits: ExecutionLimits,
+        evaluator_version: str,
+        agent_implementation: AgentDescriptor,
         description: str | None = None,
     ) -> Experiment:
+        """Create a pending experiment and record its immutable configuration snapshot."""
         experiment = Experiment(
             name=name,
             description=description,
@@ -81,44 +96,58 @@ class ExperimentService:
             created_at=self._now(),
         )
         with self._sessions.begin() as session:
-            create_experiment(session, experiment)
+            suite = load_suite(session, suite_id, suite_version)
+            for scenario_id in scenario_ids:
+                if scenario_id not in {s.id for s in suite.scenarios}:
+                    raise NotFoundError(f"scenario '{scenario_id}' not found in {suite_id}")
+            configuration = ExperimentConfiguration.build(
+                suite=suite,
+                scenario_ids=scenario_ids,
+                agent_version=load_agent_version(session, agent_version_id),
+                agent_implementation=agent_implementation,
+                limits=limits,
+                repetitions=repetitions,
+                seed=seed,
+                evaluator_version=evaluator_version,
+            )
+            create_experiment(session, experiment, configuration)
         return experiment
 
     def run_experiment(
-        self, experiment_id: str, runner: ScenarioRunner, limits: ExecutionLimits
+        self, experiment_id: str, runner: ScenarioRunner, evaluator: Evaluator
     ) -> list[str]:
-        """Execute every (scenario, repetition) of a pending experiment; return the run IDs."""
+        """Execute and evaluate every (scenario, repetition) of a pending experiment.
+
+        The runner's agent, the evaluator, and the suite must match the configuration snapshot;
+        otherwise ``ExperimentConfigurationError`` is raised (before any run when detectable).
+        """
         with self._sessions.begin() as session:
             experiment = load_experiment(session, experiment_id)
             if experiment.status is not ExperimentStatus.PENDING:
                 raise ExperimentStateError(
                     f"experiment '{experiment_id}' is '{experiment.status}', not pending"
                 )
+            configuration = load_experiment_configuration(session, experiment_id)
+            if configuration is None:
+                raise ExperimentConfigurationError(
+                    f"experiment '{experiment_id}' has no configuration snapshot"
+                )
             suite = load_suite(session, experiment.suite_id, experiment.suite_version)
-            agent_version = load_agent_version(session, experiment.agent_version_id)
+            stored_version = load_agent_version(session, experiment.agent_version_id)
+            if stored_version != configuration.agent_version:
+                raise ExperimentConfigurationError("agent version changed since creation")
+            check_inputs(configuration, suite, evaluator)
             experiment = experiment.updated(status=ExperimentStatus.RUNNING, started_at=self._now())
             update_experiment_state(session, experiment)
 
         run_ids: list[str] = []
         try:
-            for scenario_id in experiment.scenario_ids:
-                scenario = suite.get_scenario(scenario_id)
-                case = suite.get_case(scenario.case_id)
-                for repetition in range(experiment.repetitions):
-                    request = RunRequest(
-                        experiment_id=experiment.id,
-                        agent_version=agent_version,
-                        case=case,
-                        scenario=scenario,
-                        limits=limits,
-                        seed=run_seed(experiment.seed, scenario_id, repetition),
-                        repetition=repetition,
-                    )
-                    result = runner.run(request)
-                    trace = self._collector.collect(result)
-                    with self._sessions.begin() as session:
-                        save_run(session, result, trace, self._policy)
-                    run_ids.append(result.run.id)
+            for request in planned_requests(experiment.id, configuration, suite):
+                executed = execute(request, configuration, runner, evaluator, self._collector)
+                with self._sessions.begin() as session:
+                    save_run(session, executed.result, executed.trace, self._policy)
+                    save_run_evaluation(session, experiment.id, executed.evaluation)
+                run_ids.append(executed.result.run.id)
         except Exception:
             # Record the failure, then let the original error propagate unchanged.
             self._finish(experiment, ExperimentStatus.FAILED)

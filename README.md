@@ -5,7 +5,9 @@ A platform for testing the reliability of AI agents.
 The backend contains typed benchmark/domain models, a deterministic research agent with mock
 tools, a scenario runner with fault injection, and PostgreSQL persistence for experiments,
 runs, and structured traces, and a layered evaluation engine with rule-based failure diagnosis
-and an optional Groq-backed LLM judge. There is no job queue, API for results, or dashboard yet.
+and an optional Groq-backed LLM judge, plus versioned experiments with case-level comparison and
+configurable regression policies. There is no job queue, API for results, CI workflow, or
+dashboard yet.
 
 ## Repository layout
 
