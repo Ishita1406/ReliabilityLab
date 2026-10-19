@@ -26,7 +26,7 @@ def test_upgrade_matches_models_and_downgrade_is_clean(
             version = connection.execute(text("SELECT version_num FROM alembic_version")).scalar()
         assert diff == []
         assert tables == set(Base.metadata.tables) | {"alembic_version"}
-        assert version == "0003"
+        assert version == "0004"
 
         command.downgrade(config, "base")
         with engine.connect() as connection:

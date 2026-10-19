@@ -140,6 +140,22 @@ uv run python -m app.experiments.compare EXP_A EXP_B --policy policy.json   # st
 Both exit 0 when the policy passes and 1 on a regression; `compare` exits 2 when the experiments
 cannot be compared (unknown ID, no configuration snapshot, invalid policy file).
 
+## Human review and evaluator calibration
+
+Reviewers label runs (`pass`, `fail`, `ambiguous`, `insufficiently_specified`) with failure
+categories, confidence, and evidence. Reviews are append-only: a changed mind is a new record
+that supersedes the old one (the database rejects UPDATE/DELETE). `app.review.queue` selects
+runs that are security-sensitive, disputed, uncertain, or randomly sampled for calibration;
+`app.review.agreement` compares the evaluator with human labels (confusion matrix,
+precision/recall/F1, Cohen's kappa, per-category and reviewer-pair agreement). See
+[docs/engineering/08-human-review-and-calibration.md](../docs/engineering/08-human-review-and-calibration.md).
+
+```bash
+uv run python -m app.review.demo              # metrics on SYNTHETIC fixtures (not a calibration)
+uv run python -m app.review.demo imbalanced   # kappa paradox example
+APP_DATABASE_URL=... uv run python -m app.review.report EXPERIMENT_ID [--scope all]
+```
+
 ## Database (PostgreSQL)
 
 Persistence uses PostgreSQL with SQLAlchemy 2.x and Alembic. Start the local database and
@@ -187,6 +203,7 @@ src/app/
   db/                   # SQLAlchemy models, sessions, repositories (suites, runs, reviews)
   evaluation/           # evaluation engine, checks, LLM judge (Groq), diagnosis, demo CLI
   experiments/          # snapshots, executor, metrics, comparison, regression policy, CLIs
+  review/               # human review records, queue, agreement metrics, fixtures, CLIs
 migrations/             # Alembic environment and revisions
 schemas/                # generated JSON Schema files (committed)
 tests/                  # pytest suite (no network, no external services)

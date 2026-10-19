@@ -6,7 +6,8 @@ The backend contains typed benchmark/domain models, a deterministic research age
 tools, a scenario runner with fault injection, and PostgreSQL persistence for experiments,
 runs, and structured traces, and a layered evaluation engine with rule-based failure diagnosis
 and an optional Groq-backed LLM judge, plus versioned experiments with case-level comparison and
-configurable regression policies. There is no job queue, API for results, CI workflow, or
+configurable regression policies, and an append-only human review workflow with agreement metrics
+for evaluator calibration. There is no job queue, API for results, CI workflow, review UI, or
 dashboard yet.
 
 ## Repository layout

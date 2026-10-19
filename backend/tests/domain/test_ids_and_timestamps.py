@@ -20,6 +20,7 @@ ALIAS_BY_PREFIX = {
     IdPrefix.EVALUATION_RESULT: ids.EvaluationResultId,
     IdPrefix.FAILURE_CLASSIFICATION: ids.FailureClassificationId,
     IdPrefix.REVIEW_ANNOTATION: ids.ReviewAnnotationId,
+    IdPrefix.HUMAN_REVIEW: ids.HumanReviewId,
 }
 
 

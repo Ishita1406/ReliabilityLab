@@ -36,6 +36,7 @@ class IdPrefix(StrEnum):
     EVALUATION_RESULT = "evr"
     FAILURE_CLASSIFICATION = "fcl"
     REVIEW_ANNOTATION = "rev"
+    HUMAN_REVIEW = "hrv"
 
 
 _HEX32 = "[0-9a-f]{32}"
@@ -49,6 +50,7 @@ ToolCallId = Annotated[str, StringConstraints(pattern=rf"^tcl_{_HEX32}$")]
 EvaluationResultId = Annotated[str, StringConstraints(pattern=rf"^evr_{_HEX32}$")]
 FailureClassificationId = Annotated[str, StringConstraints(pattern=rf"^fcl_{_HEX32}$")]
 ReviewAnnotationId = Annotated[str, StringConstraints(pattern=rf"^rev_{_HEX32}$")]
+HumanReviewId = Annotated[str, StringConstraints(pattern=rf"^hrv_{_HEX32}$")]
 
 
 def new_id(prefix: IdPrefix) -> str:

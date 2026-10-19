@@ -59,6 +59,7 @@ from app.domain.enums import (
 )
 from app.domain.ids import SLUG_PATTERN
 from app.evaluation.models import Verdict
+from app.review.models import ReviewLabel
 from app.runner.runner import TerminationReason
 from app.runtime.limits import LimitKind
 from app.tracing.schema import EventKind, EventStatus
@@ -635,3 +636,68 @@ class ReviewAnnotationRow(Base):
     corrected_passed: Mapped[bool | None] = mapped_column(Boolean)
     created_at: Created
     updated_at: Mapped[datetime | None]
+
+
+class HumanReviewRow(Base):
+    """Milestone 8 human reviews. Append-only: corrections are new rows that supersede the
+    reviewer's previous row; a trigger (migration 0004) rejects UPDATE and DELETE."""
+
+    __tablename__ = "human_reviews"
+    __table_args__ = (
+        _id_check("id", "hrv"),
+        enum_check("label", ReviewLabel),
+        CheckConstraint("provenance IN ('human', 'synthetic')", name="provenance_values"),
+        CheckConstraint(
+            "confidence IS NULL OR (confidence >= 0 AND confidence <= 1)", name="confidence_range"
+        ),
+        CheckConstraint(
+            "(supersedes IS NULL) = (correction_reason IS NULL)", name="correction_complete"
+        ),
+        CheckConstraint(
+            "label IN ('pass', 'fail') OR rationale IS NOT NULL",
+            name="non_definite_needs_rationale",
+        ),
+        CheckConstraint("supersedes IS NULL OR supersedes <> id", name="not_self_superseding"),
+        UniqueConstraint("supersedes"),  # no forks: a review is corrected at most once
+        UniqueConstraint("id", "run_id", "evaluator_version", "reviewer"),
+        ForeignKeyConstraint(
+            ["supersedes", "run_id", "evaluator_version", "reviewer"],
+            [
+                "human_reviews.id",
+                "human_reviews.run_id",
+                "human_reviews.evaluator_version",
+                "human_reviews.reviewer",
+            ],
+            name="fk_human_reviews_supersedes_same_chain",
+        ),
+        ForeignKeyConstraint(
+            ["run_id", "evaluator_version"],
+            ["run_evaluations.run_id", "run_evaluations.evaluator_version"],
+            name="fk_human_reviews_evaluation",
+        ),
+        Index(
+            "uq_human_reviews_one_chain_root",
+            "run_id",
+            "evaluator_version",
+            "reviewer",
+            unique=True,
+            postgresql_where=text("supersedes IS NULL"),
+        ),
+    )
+
+    id: Mapped[str] = mapped_column(Text, primary_key=True)
+    run_id: Mapped[str] = mapped_column(Text, index=True)
+    evaluator_version: Mapped[str] = mapped_column(Text)
+    case_id: Mapped[str] = mapped_column(Text)
+    scenario_id: Mapped[str] = mapped_column(Text)
+    reviewer: Mapped[str] = mapped_column(Text, index=True)
+    label: Mapped[ReviewLabel] = mapped_column(enum_type(ReviewLabel, "review_label"))
+    categories: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    confidence: Mapped[float | None] = mapped_column(Double)
+    evidence: Mapped[list[Any]] = mapped_column(JSONB)
+    rationale: Mapped[str | None] = mapped_column(Text)
+    blind: Mapped[bool] = mapped_column(Boolean)
+    provenance: Mapped[str] = mapped_column(Text)
+    supersedes: Mapped[str | None] = mapped_column(Text)
+    correction_reason: Mapped[str | None] = mapped_column(Text)
+    created_at: Created
