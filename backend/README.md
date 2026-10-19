@@ -47,6 +47,12 @@ if present). See `src/app/config.py` and the root `.env.example`.
 | `APP_TRACE_RETENTION_DAYS` | `30`                  | integer ≥ 1                            |
 | `APP_TEST_DATABASE_URL` | falls back to `APP_DATABASE_URL` | server used for throwaway test databases |
 | `APP_REQUIRE_POSTGRES` | unset                     | `1` makes unreachable-database tests fail |
+| `APP_JUDGE_PROVIDER` | `none`                      | `none`, `groq` (optional LLM judge)    |
+| `APP_GROQ_API_KEY` (or `GROQ_API_KEY`) | unset   | Groq API key; required when the provider is `groq` |
+| `APP_GROQ_MODEL`   | `llama-3.3-70b-versatile`     | any Groq chat model that supports JSON mode |
+| `APP_GROQ_BASE_URL` | `https://api.groq.com/openai/v1` | OpenAI-compatible base URL      |
+| `APP_JUDGE_TIMEOUT_SECONDS` | `30`                 | > 0                                    |
+| `APP_JUDGE_SAMPLES` | `1`                          | 1–5 independent judge calls per rubric criterion |
 
 ## Domain models and benchmark datasets
 
@@ -99,6 +105,23 @@ uv run python -m app.runner.demo --seed 3 search-flaky    # seeded probabilistic
 uv run python -m app.runner.demo --json fetch-misleading  # full ScenarioRunResult JSON
 ```
 
+## Evaluation and failure diagnosis
+
+`app.evaluation.Evaluator` scores a stored run trace against its scenario's expectation in three
+layers (answer, tool behaviour, execution) and returns a `CaseEvaluation` with a
+`passed`/`failed`/`inconclusive` verdict, score bounds, failure labels, per-criterion evidence
+(trace event IDs), and explanations. `app.evaluation.diagnosis.diagnose` turns an evaluation and
+its trace into observations and candidate root causes. Rubric criteria use an optional LLM judge
+(Groq); without one they are reported as inconclusive. Tests never call the network. See
+[docs/engineering/06-evaluation-and-diagnosis.md](../docs/engineering/06-evaluation-and-diagnosis.md).
+
+```bash
+uv run python -m app.evaluation.demo                        # verdicts for every sample scenario
+uv run python -m app.evaluation.demo -v fetch-misleading    # criteria + observations
+uv run python -m app.evaluation.demo --json search-empty    # CaseEvaluation + Diagnosis JSON
+APP_JUDGE_PROVIDER=groq GROQ_API_KEY=... uv run python -m app.evaluation.demo --judge  # uses Groq
+```
+
 ## Database (PostgreSQL)
 
 Persistence uses PostgreSQL with SQLAlchemy 2.x and Alembic. Start the local database and
@@ -111,6 +134,10 @@ uv run alembic upgrade head        # apply migrations
 uv run alembic current             # show the applied revision
 uv run alembic check               # fail if models and migrations have drifted
 ```
+
+`alembic check` (autogenerate) does not compare CHECK constraints: when you add a value to an
+enum stored in a column, write the migration by hand (see `0002`). `tests/db/test_migrations.py`
+compares every enum CHECK constraint in the database with the models.
 
 After changing `src/app/db/models.py`, create a migration with
 `uv run alembic revision --autogenerate -m "<change>"`, **review it by hand**, and commit it.
@@ -141,6 +168,7 @@ src/app/
   tracing/              # trace event schema, collector, redaction/size policy, reconstruction
   db/                   # SQLAlchemy models, sessions, repositories (suites, runs, reviews)
   experiments/          # ExperimentService: create + run experiments with persistence
+  evaluation/           # evaluation engine, checks, LLM judge (Groq), diagnosis, demo CLI
 migrations/             # Alembic environment and revisions
 schemas/                # generated JSON Schema files (committed)
 tests/                  # pytest suite (no network, no external services)

@@ -4,7 +4,8 @@ A platform for testing the reliability of AI agents.
 
 The backend contains typed benchmark/domain models, a deterministic research agent with mock
 tools, a scenario runner with fault injection, and PostgreSQL persistence for experiments,
-runs, and structured traces. There is no LLM integration, job queue, or dashboard yet.
+runs, and structured traces, and a layered evaluation engine with rule-based failure diagnosis
+and an optional Groq-backed LLM judge. There is no job queue, API for results, or dashboard yet.
 
 ## Repository layout
 
@@ -75,6 +76,9 @@ git-ignored.
 | `APP_ENVIRONMENT`  | backend  | `development`                | `development`, `test`, or `production`      |
 | `APP_DATABASE_URL` | backend  | unset                        | PostgreSQL URL (needed for persistence)     |
 | `APP_TRACE_RETENTION_DAYS` | backend | `30`                | trace retention window (days)               |
+| `APP_JUDGE_PROVIDER` | backend | `none`                    | `groq` enables the optional LLM judge       |
+| `APP_GROQ_API_KEY` | backend  | unset                        | Groq key (`GROQ_API_KEY` also accepted)     |
+| `APP_GROQ_MODEL`   | backend  | `llama-3.3-70b-versatile`    | Groq model used by the judge                |
 
 ## API
 

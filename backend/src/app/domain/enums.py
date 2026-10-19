@@ -150,8 +150,45 @@ class CriterionType(StrEnum):
     DECLARED_OUTCOME = "declared_outcome"
     TOOL_CALL_COUNT = "tool_call_count"
     CITATIONS_WITHIN = "citations_within"
+    # Added in Milestone 6 (evaluation engine).
+    ANSWER_EXACT = "answer_exact"
+    REQUIRED_FACTS = "required_facts"
+    FORBIDDEN_CLAIMS = "forbidden_claims"
+    STRUCTURED_OUTPUT = "structured_output"
+    TOOL_CALLS_REQUIRED = "tool_calls_required"
+    PROHIBITED_ACTIONS = "prohibited_actions"
+    EXECUTION_LIMITS = "execution_limits"
+    EXPECTED_RECOVERY = "expected_recovery"
+    RUBRIC = "rubric"
 
 
 class MatchMode(StrEnum):
     ALL = "all"
     ANY = "any"
+
+
+class Normalization(StrEnum):
+    """How answers are normalised before exact comparison."""
+
+    NONE = "none"
+    STANDARD = "standard"
+    """Strip ``[source:...]`` citations, casefold, collapse whitespace, and strip surrounding
+    punctuation."""
+
+
+class AnswerFormat(StrEnum):
+    """Where a structured (JSON) answer is found in the final answer content."""
+
+    WHOLE = "whole"
+    """The entire answer content is one JSON document."""
+    JSON_BLOCK = "json_block"
+    """The answer contains exactly one fenced ```json code block."""
+
+
+class RecoveryBehavior(StrEnum):
+    """What a correct agent does after an injected fault."""
+
+    RETRY_SUCCEEDED = "retry_succeeded"
+    """A later call to the same tool succeeded."""
+    FAILURE_REPORTED = "failure_reported"
+    """The agent did not claim an answer: it declared task_failed or insufficient_information."""

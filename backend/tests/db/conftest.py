@@ -23,7 +23,9 @@ from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session, sessionmaker
 
 BACKEND_DIR = Path(__file__).resolve().parents[2]
-LOCAL_DEFAULT_URL = "postgresql+psycopg://reliabilitylab:reliabilitylab_local_dev@127.0.0.1:5433/reliabilitylab"
+LOCAL_DEFAULT_URL = (
+    "postgresql+psycopg://reliabilitylab:reliabilitylab_local_dev@127.0.0.1:5433/reliabilitylab"
+)
 
 
 def server_url() -> str:

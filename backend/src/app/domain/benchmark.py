@@ -13,10 +13,21 @@ import re
 from collections import Counter
 from typing import Annotated, Literal, Self
 
-from pydantic import Field, NonNegativeInt, model_validator
+from jsonschema import Draft202012Validator
+from jsonschema.exceptions import SchemaError
+from pydantic import Field, JsonValue, NonNegativeInt, PositiveInt, model_validator
 
 from app.domain.base import DomainModel, NonEmptyStr, SemVer, require_unique
-from app.domain.enums import AgentOutcome, CriterionType, Difficulty, MatchMode, ScenarioKind
+from app.domain.enums import (
+    AgentOutcome,
+    AnswerFormat,
+    CriterionType,
+    Difficulty,
+    MatchMode,
+    Normalization,
+    RecoveryBehavior,
+    ScenarioKind,
+)
 from app.domain.faults import FaultConfig
 from app.domain.ids import Slug
 from app.domain.timestamps import UtcDateTime
@@ -26,6 +37,8 @@ SCHEMA_VERSION = "1.0"
 
 CITATION_PATTERN = r"\[source:([a-z0-9]+(?:[.\-_][a-z0-9]+)*)\]"
 """How agents cite a source document in their answer, e.g. ``[source:veloria-almanac]``."""
+
+ScalarValue = str | int | float | bool
 
 # --- Evaluation criteria -------------------------------------------------------------------
 
@@ -103,7 +116,205 @@ class CitationsWithinCriterion(_CriterionBase):
 
     type: Literal[CriterionType.CITATIONS_WITHIN]
     allowed_source_ids: list[Slug] = Field(min_length=1)
-    min_citations: NonNegativeInt = 1
+    min_citations: NonNegativeInt = Field(default=1, description="Distinct cited source IDs.")
+    require_tool_provenance: bool = Field(
+        default=False,
+        description="Every cited ID must appear in a successful tool result of the run.",
+    )
+
+
+class AnswerExactCriterion(_CriterionBase):
+    """The (normalised) answer, or the JSON value at ``json_pointer``, equals one of the
+    accepted values. Only appropriate for short or structured answers."""
+
+    type: Literal[CriterionType.ANSWER_EXACT]
+    accepted: list[NonEmptyStr] = Field(min_length=1)
+    normalization: Normalization = Normalization.STANDARD
+    json_pointer: str | None = Field(
+        default=None,
+        pattern=r"^(/[^/]*)*$",
+        description="RFC 6901 pointer into a JSON answer (whole content); compared as text.",
+    )
+
+
+class TextMatcher(DomainModel):
+    """Matches when any phrase (case-insensitive substring) or regex pattern
+    (case-insensitive ``re.search``) occurs in the text."""
+
+    id: Slug
+    description: NonEmptyStr
+    phrases: list[NonEmptyStr] = Field(default_factory=list)
+    patterns: list[NonEmptyStr] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def _has_matchers(self) -> Self:
+        if not self.phrases and not self.patterns:
+            raise ValueError(f"'{self.id}' needs at least one phrase or pattern")
+        for pattern in self.patterns:
+            try:
+                re.compile(pattern)
+            except re.error as exc:
+                raise ValueError(f"'{self.id}': invalid regular expression: {exc}") from exc
+        return self
+
+
+class ForbiddenClaim(TextMatcher):
+    security_sensitive: bool = Field(
+        default=False,
+        description="True if asserting this claim indicates a security violation, e.g. "
+        "compliance with injected instructions.",
+    )
+
+
+class RequiredFactsCriterion(_CriterionBase):
+    """The answer states the listed facts (all of them, or at least ``min_present``)."""
+
+    type: Literal[CriterionType.REQUIRED_FACTS]
+    facts: list[TextMatcher] = Field(min_length=1)
+    min_present: PositiveInt | None = Field(default=None, description="null means all facts.")
+
+    @model_validator(mode="after")
+    def _consistent(self) -> Self:
+        require_unique((f.id for f in self.facts), "fact ids")
+        if self.min_present is not None and self.min_present > len(self.facts):
+            raise ValueError("min_present cannot exceed the number of facts")
+        return self
+
+
+class ForbiddenClaimsCriterion(_CriterionBase):
+    """The answer asserts none of the listed claims (detected by text matching)."""
+
+    type: Literal[CriterionType.FORBIDDEN_CLAIMS]
+    claims: list[ForbiddenClaim] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def _unique(self) -> Self:
+        require_unique((c.id for c in self.claims), "claim ids")
+        return self
+
+
+class StructuredOutputCriterion(_CriterionBase):
+    """The answer contains JSON that is valid against ``json_schema`` (Draft 2020-12)."""
+
+    type: Literal[CriterionType.STRUCTURED_OUTPUT]
+    json_schema: dict[str, JsonValue]
+    answer_format: AnswerFormat = AnswerFormat.WHOLE
+
+    @model_validator(mode="after")
+    def _schema_valid(self) -> Self:
+        try:
+            Draft202012Validator.check_schema(self.json_schema)
+        except SchemaError as exc:
+            raise ValueError(f"invalid JSON schema: {exc.message}") from exc
+        return self
+
+
+class RequiredToolCall(DomainModel):
+    tool_name: Slug
+    arguments: dict[str, ScalarValue] = Field(
+        default_factory=dict, description="Arguments that must match exactly (a subset)."
+    )
+    must_succeed: bool = True
+    min_count: PositiveInt = 1
+
+
+class ToolCallsRequiredCriterion(_CriterionBase):
+    """Each listed call was made (with matching arguments, successfully if required)."""
+
+    type: Literal[CriterionType.TOOL_CALLS_REQUIRED]
+    calls: list[RequiredToolCall] = Field(min_length=1)
+
+
+class ProhibitedActionsCriterion(_CriterionBase):
+    """No call or call attempt to a prohibited tool, and (by default) no request for a tool
+    that the case does not make available."""
+
+    type: Literal[CriterionType.PROHIBITED_ACTIONS]
+    tool_names: list[NonEmptyStr] = Field(
+        default_factory=list, description="Any string: prohibited tools need not exist."
+    )
+    forbid_unavailable_tools: bool = True
+
+    @model_validator(mode="after")
+    def _not_vacuous(self) -> Self:
+        if not self.tool_names and not self.forbid_unavailable_tools:
+            raise ValueError(
+                "set tool_names or forbid_unavailable_tools; otherwise it always passes"
+            )
+        require_unique(self.tool_names, "tool_names")
+        return self
+
+
+class ExecutionLimitsCriterion(_CriterionBase):
+    """The run completed without hitting a harness limit and stayed within these budgets."""
+
+    type: Literal[CriterionType.EXECUTION_LIMITS]
+    max_tool_calls: NonNegativeInt | None = None
+    max_failed_tool_calls: NonNegativeInt | None = None
+    max_steps: PositiveInt | None = None
+    max_duration_seconds: float | None = Field(default=None, gt=0)
+
+
+class ExpectedRecoveryCriterion(_CriterionBase):
+    """The listed scenario faults fired, and the agent then behaved as ``behavior`` says.
+
+    Only allowed in a fault-injected scenario's ``expectation_override`` (it refers to that
+    scenario's faults)."""
+
+    type: Literal[CriterionType.EXPECTED_RECOVERY]
+    fault_ids: list[Slug] = Field(min_length=1)
+    behavior: RecoveryBehavior
+    max_attempts: PositiveInt | None = Field(
+        default=None,
+        description="Max identical calls (same tool and arguments) counting the faulted one.",
+    )
+
+    @model_validator(mode="after")
+    def _unique(self) -> Self:
+        require_unique(self.fault_ids, "fault_ids")
+        return self
+
+
+class RubricLevel(DomainModel):
+    score: NonNegativeInt
+    description: NonEmptyStr
+
+
+class RubricDimension(DomainModel):
+    id: Slug
+    description: NonEmptyStr
+    levels: list[RubricLevel] = Field(min_length=2)
+
+    @model_validator(mode="after")
+    def _levels_unique(self) -> Self:
+        require_unique((str(level.score) for level in self.levels), f"'{self.id}' level scores")
+        return self
+
+    @property
+    def min_score(self) -> int:
+        return min(level.score for level in self.levels)
+
+    @property
+    def max_score(self) -> int:
+        return max(level.score for level in self.levels)
+
+
+class RubricCriterion(_CriterionBase):
+    """Graded by a judge (e.g. an LLM) against the rubric. Without a judge, or when the
+    judge is unreliable, the criterion is inconclusive rather than passed or failed."""
+
+    type: Literal[CriterionType.RUBRIC]
+    dimensions: list[RubricDimension] = Field(min_length=1)
+    pass_score: float = Field(
+        gt=0.0, le=1.0, description="Normalised score (0..1, mean over dimensions) to pass."
+    )
+    min_confidence: float = Field(default=0.5, ge=0.0, le=1.0)
+    guidance: NonEmptyStr | None = Field(default=None, description="Extra notes for the judge.")
+
+    @model_validator(mode="after")
+    def _unique(self) -> Self:
+        require_unique((d.id for d in self.dimensions), "dimension ids")
+        return self
 
 
 EvaluationCriterion = Annotated[
@@ -112,7 +323,16 @@ EvaluationCriterion = Annotated[
     | AnswerMatchesRegexCriterion
     | DeclaredOutcomeCriterion
     | ToolCallCountCriterion
-    | CitationsWithinCriterion,
+    | CitationsWithinCriterion
+    | AnswerExactCriterion
+    | RequiredFactsCriterion
+    | ForbiddenClaimsCriterion
+    | StructuredOutputCriterion
+    | ToolCallsRequiredCriterion
+    | ProhibitedActionsCriterion
+    | ExecutionLimitsCriterion
+    | ExpectedRecoveryCriterion
+    | RubricCriterion,
     Field(discriminator="type"),
 ]
 
@@ -174,9 +394,6 @@ class SourceDocument(DomainModel):
     content: NonEmptyStr
 
 
-ScalarValue = str | int | float | bool
-
-
 class TaskInputs(DomainModel):
     prompt: NonEmptyStr = Field(description="The instruction given to the agent.")
     documents: list[SourceDocument] = Field(default_factory=list)
@@ -212,6 +429,13 @@ class BenchmarkCase(DomainModel):
     def _references_valid(self) -> Self:
         require_unique(self.tags, "tags")
         check_expectation_references(self.expectation, self.inputs)
+        if any(
+            isinstance(c, ExpectedRecoveryCriterion) for c in self.expectation.evaluation_criteria
+        ):
+            raise ValueError(
+                "expected_recovery criteria refer to scenario faults and are only allowed in a "
+                "fault-injected scenario's expectation_override"
+            )
         return self
 
 
@@ -224,6 +448,13 @@ def check_expectation_references(expectation: Expectation, inputs: TaskInputs) -
             raise ValueError(
                 f"criterion '{criterion.id}' references unknown tool '{criterion.tool_name}'"
             )
+        if isinstance(criterion, ToolCallsRequiredCriterion):
+            unknown_tools = sorted({c.tool_name for c in criterion.calls} - tools)
+            if unknown_tools:
+                raise ValueError(
+                    f"criterion '{criterion.id}' references unknown tools: "
+                    f"{', '.join(unknown_tools)}"
+                )
         if isinstance(criterion, CitationsWithinCriterion):
             unknown = sorted(set(criterion.allowed_source_ids) - documents)
             if unknown:
@@ -256,6 +487,16 @@ class Scenario(DomainModel):
         elif not self.faults:
             raise ValueError("fault_injected scenarios must define at least one fault")
         require_unique((f.id for f in self.faults), "fault ids")
+        if self.expectation_override is not None:
+            fault_ids = {f.id for f in self.faults}
+            for criterion in self.expectation_override.evaluation_criteria:
+                if isinstance(criterion, ExpectedRecoveryCriterion):
+                    unknown = sorted(set(criterion.fault_ids) - fault_ids)
+                    if unknown:
+                        raise ValueError(
+                            f"criterion '{criterion.id}' references faults not in scenario "
+                            f"'{self.id}': {', '.join(unknown)}"
+                        )
         return self
 
 

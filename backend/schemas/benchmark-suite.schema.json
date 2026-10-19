@@ -75,6 +75,78 @@
       "title": "AnswerContainsCriterion",
       "type": "object"
     },
+    "AnswerExactCriterion": {
+      "additionalProperties": false,
+      "description": "The (normalised) answer, or the JSON value at ``json_pointer``, equals one of the\naccepted values. Only appropriate for short or structured answers.",
+      "properties": {
+        "id": {
+          "description": "Identifier unique within its expectation.",
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "weight": {
+          "default": 1.0,
+          "description": "Relative weight in the score.",
+          "exclusiveMinimum": 0.0,
+          "title": "Weight",
+          "type": "number"
+        },
+        "required": {
+          "default": false,
+          "description": "If true, the run fails when this criterion fails.",
+          "title": "Required",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "answer_exact",
+          "title": "Type",
+          "type": "string"
+        },
+        "accepted": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Accepted",
+          "type": "array"
+        },
+        "normalization": {
+          "$ref": "#/$defs/Normalization",
+          "default": "standard"
+        },
+        "json_pointer": {
+          "anyOf": [
+            {
+              "pattern": "^(/[^/]*)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "RFC 6901 pointer into a JSON answer (whole content); compared as text.",
+          "title": "Json Pointer"
+        }
+      },
+      "required": [
+        "id",
+        "description",
+        "type",
+        "accepted"
+      ],
+      "title": "AnswerExactCriterion",
+      "type": "object"
+    },
     "AnswerExcludesCriterion": {
       "additionalProperties": false,
       "description": "The final answer contains none of the given strings.",
@@ -133,6 +205,15 @@
       ],
       "title": "AnswerExcludesCriterion",
       "type": "object"
+    },
+    "AnswerFormat": {
+      "description": "Where a structured (JSON) answer is found in the final answer content.",
+      "enum": [
+        "whole",
+        "json_block"
+      ],
+      "title": "AnswerFormat",
+      "type": "string"
     },
     "AnswerMatchesRegexCriterion": {
       "additionalProperties": false,
@@ -323,9 +404,16 @@
         },
         "min_citations": {
           "default": 1,
+          "description": "Distinct cited source IDs.",
           "minimum": 0,
           "title": "Min Citations",
           "type": "integer"
+        },
+        "require_tool_provenance": {
+          "default": false,
+          "description": "Every cited ID must appear in a successful tool result of the run.",
+          "title": "Require Tool Provenance",
+          "type": "boolean"
         }
       },
       "required": [
@@ -451,6 +539,102 @@
       "title": "EmptyResultFault",
       "type": "object"
     },
+    "ExecutionLimitsCriterion": {
+      "additionalProperties": false,
+      "description": "The run completed without hitting a harness limit and stayed within these budgets.",
+      "properties": {
+        "id": {
+          "description": "Identifier unique within its expectation.",
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "weight": {
+          "default": 1.0,
+          "description": "Relative weight in the score.",
+          "exclusiveMinimum": 0.0,
+          "title": "Weight",
+          "type": "number"
+        },
+        "required": {
+          "default": false,
+          "description": "If true, the run fails when this criterion fails.",
+          "title": "Required",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "execution_limits",
+          "title": "Type",
+          "type": "string"
+        },
+        "max_tool_calls": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Tool Calls"
+        },
+        "max_failed_tool_calls": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Failed Tool Calls"
+        },
+        "max_steps": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Steps"
+        },
+        "max_duration_seconds": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Duration Seconds"
+        }
+      },
+      "required": [
+        "id",
+        "description",
+        "type"
+      ],
+      "title": "ExecutionLimitsCriterion",
+      "type": "object"
+    },
     "Expectation": {
       "additionalProperties": false,
       "properties": {
@@ -462,11 +646,20 @@
             "discriminator": {
               "mapping": {
                 "answer_contains": "#/$defs/AnswerContainsCriterion",
+                "answer_exact": "#/$defs/AnswerExactCriterion",
                 "answer_excludes": "#/$defs/AnswerExcludesCriterion",
                 "answer_matches_regex": "#/$defs/AnswerMatchesRegexCriterion",
                 "citations_within": "#/$defs/CitationsWithinCriterion",
                 "declared_outcome": "#/$defs/DeclaredOutcomeCriterion",
-                "tool_call_count": "#/$defs/ToolCallCountCriterion"
+                "execution_limits": "#/$defs/ExecutionLimitsCriterion",
+                "expected_recovery": "#/$defs/ExpectedRecoveryCriterion",
+                "forbidden_claims": "#/$defs/ForbiddenClaimsCriterion",
+                "prohibited_actions": "#/$defs/ProhibitedActionsCriterion",
+                "required_facts": "#/$defs/RequiredFactsCriterion",
+                "rubric": "#/$defs/RubricCriterion",
+                "structured_output": "#/$defs/StructuredOutputCriterion",
+                "tool_call_count": "#/$defs/ToolCallCountCriterion",
+                "tool_calls_required": "#/$defs/ToolCallsRequiredCriterion"
               },
               "propertyName": "type"
             },
@@ -488,6 +681,33 @@
               },
               {
                 "$ref": "#/$defs/CitationsWithinCriterion"
+              },
+              {
+                "$ref": "#/$defs/AnswerExactCriterion"
+              },
+              {
+                "$ref": "#/$defs/RequiredFactsCriterion"
+              },
+              {
+                "$ref": "#/$defs/ForbiddenClaimsCriterion"
+              },
+              {
+                "$ref": "#/$defs/StructuredOutputCriterion"
+              },
+              {
+                "$ref": "#/$defs/ToolCallsRequiredCriterion"
+              },
+              {
+                "$ref": "#/$defs/ProhibitedActionsCriterion"
+              },
+              {
+                "$ref": "#/$defs/ExecutionLimitsCriterion"
+              },
+              {
+                "$ref": "#/$defs/ExpectedRecoveryCriterion"
+              },
+              {
+                "$ref": "#/$defs/RubricCriterion"
               }
             ]
           },
@@ -538,6 +758,178 @@
         "description"
       ],
       "title": "ExpectedOutcome",
+      "type": "object"
+    },
+    "ExpectedRecoveryCriterion": {
+      "additionalProperties": false,
+      "description": "The listed scenario faults fired, and the agent then behaved as ``behavior`` says.\n\nOnly allowed in a fault-injected scenario's ``expectation_override`` (it refers to that\nscenario's faults).",
+      "properties": {
+        "id": {
+          "description": "Identifier unique within its expectation.",
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "weight": {
+          "default": 1.0,
+          "description": "Relative weight in the score.",
+          "exclusiveMinimum": 0.0,
+          "title": "Weight",
+          "type": "number"
+        },
+        "required": {
+          "default": false,
+          "description": "If true, the run fails when this criterion fails.",
+          "title": "Required",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "expected_recovery",
+          "title": "Type",
+          "type": "string"
+        },
+        "fault_ids": {
+          "items": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Fault Ids",
+          "type": "array"
+        },
+        "behavior": {
+          "$ref": "#/$defs/RecoveryBehavior"
+        },
+        "max_attempts": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Max identical calls (same tool and arguments) counting the faulted one.",
+          "title": "Max Attempts"
+        }
+      },
+      "required": [
+        "id",
+        "description",
+        "type",
+        "fault_ids",
+        "behavior"
+      ],
+      "title": "ExpectedRecoveryCriterion",
+      "type": "object"
+    },
+    "ForbiddenClaim": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "phrases": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Phrases",
+          "type": "array"
+        },
+        "patterns": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Patterns",
+          "type": "array"
+        },
+        "security_sensitive": {
+          "default": false,
+          "description": "True if asserting this claim indicates a security violation, e.g. compliance with injected instructions.",
+          "title": "Security Sensitive",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "description"
+      ],
+      "title": "ForbiddenClaim",
+      "type": "object"
+    },
+    "ForbiddenClaimsCriterion": {
+      "additionalProperties": false,
+      "description": "The answer asserts none of the listed claims (detected by text matching).",
+      "properties": {
+        "id": {
+          "description": "Identifier unique within its expectation.",
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "weight": {
+          "default": 1.0,
+          "description": "Relative weight in the score.",
+          "exclusiveMinimum": 0.0,
+          "title": "Weight",
+          "type": "number"
+        },
+        "required": {
+          "default": false,
+          "description": "If true, the run fails when this criterion fails.",
+          "title": "Required",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "forbidden_claims",
+          "title": "Type",
+          "type": "string"
+        },
+        "claims": {
+          "items": {
+            "$ref": "#/$defs/ForbiddenClaim"
+          },
+          "minItems": 1,
+          "title": "Claims",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "description",
+        "type",
+        "claims"
+      ],
+      "title": "ForbiddenClaimsCriterion",
       "type": "object"
     },
     "IncompleteResultFault": {
@@ -669,6 +1061,7 @@
       "title": "IncorrectOutputFault",
       "type": "object"
     },
+    "JsonValue": {},
     "LatencyFault": {
       "additionalProperties": false,
       "properties": {
@@ -811,6 +1204,73 @@
       "title": "MatchMode",
       "type": "string"
     },
+    "Normalization": {
+      "description": "How answers are normalised before exact comparison.",
+      "enum": [
+        "none",
+        "standard"
+      ],
+      "title": "Normalization",
+      "type": "string"
+    },
+    "ProhibitedActionsCriterion": {
+      "additionalProperties": false,
+      "description": "No call or call attempt to a prohibited tool, and (by default) no request for a tool\nthat the case does not make available.",
+      "properties": {
+        "id": {
+          "description": "Identifier unique within its expectation.",
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "weight": {
+          "default": 1.0,
+          "description": "Relative weight in the score.",
+          "exclusiveMinimum": 0.0,
+          "title": "Weight",
+          "type": "number"
+        },
+        "required": {
+          "default": false,
+          "description": "If true, the run fails when this criterion fails.",
+          "title": "Required",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "prohibited_actions",
+          "title": "Type",
+          "type": "string"
+        },
+        "tool_names": {
+          "description": "Any string: prohibited tools need not exist.",
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Tool Names",
+          "type": "array"
+        },
+        "forbid_unavailable_tools": {
+          "default": true,
+          "title": "Forbid Unavailable Tools",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "description",
+        "type"
+      ],
+      "title": "ProhibitedActionsCriterion",
+      "type": "object"
+    },
     "PromptInjectionFault": {
       "additionalProperties": false,
       "properties": {
@@ -936,6 +1396,266 @@
         "retry_after_ms"
       ],
       "title": "RateLimitFault",
+      "type": "object"
+    },
+    "RecoveryBehavior": {
+      "description": "What a correct agent does after an injected fault.",
+      "enum": [
+        "retry_succeeded",
+        "failure_reported"
+      ],
+      "title": "RecoveryBehavior",
+      "type": "string"
+    },
+    "RequiredFactsCriterion": {
+      "additionalProperties": false,
+      "description": "The answer states the listed facts (all of them, or at least ``min_present``).",
+      "properties": {
+        "id": {
+          "description": "Identifier unique within its expectation.",
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "weight": {
+          "default": 1.0,
+          "description": "Relative weight in the score.",
+          "exclusiveMinimum": 0.0,
+          "title": "Weight",
+          "type": "number"
+        },
+        "required": {
+          "default": false,
+          "description": "If true, the run fails when this criterion fails.",
+          "title": "Required",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "required_facts",
+          "title": "Type",
+          "type": "string"
+        },
+        "facts": {
+          "items": {
+            "$ref": "#/$defs/TextMatcher"
+          },
+          "minItems": 1,
+          "title": "Facts",
+          "type": "array"
+        },
+        "min_present": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "null means all facts.",
+          "title": "Min Present"
+        }
+      },
+      "required": [
+        "id",
+        "description",
+        "type",
+        "facts"
+      ],
+      "title": "RequiredFactsCriterion",
+      "type": "object"
+    },
+    "RequiredToolCall": {
+      "additionalProperties": false,
+      "properties": {
+        "tool_name": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Tool Name",
+          "type": "string"
+        },
+        "arguments": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "description": "Arguments that must match exactly (a subset).",
+          "title": "Arguments",
+          "type": "object"
+        },
+        "must_succeed": {
+          "default": true,
+          "title": "Must Succeed",
+          "type": "boolean"
+        },
+        "min_count": {
+          "default": 1,
+          "exclusiveMinimum": 0,
+          "title": "Min Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "tool_name"
+      ],
+      "title": "RequiredToolCall",
+      "type": "object"
+    },
+    "RubricCriterion": {
+      "additionalProperties": false,
+      "description": "Graded by a judge (e.g. an LLM) against the rubric. Without a judge, or when the\njudge is unreliable, the criterion is inconclusive rather than passed or failed.",
+      "properties": {
+        "id": {
+          "description": "Identifier unique within its expectation.",
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "weight": {
+          "default": 1.0,
+          "description": "Relative weight in the score.",
+          "exclusiveMinimum": 0.0,
+          "title": "Weight",
+          "type": "number"
+        },
+        "required": {
+          "default": false,
+          "description": "If true, the run fails when this criterion fails.",
+          "title": "Required",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "rubric",
+          "title": "Type",
+          "type": "string"
+        },
+        "dimensions": {
+          "items": {
+            "$ref": "#/$defs/RubricDimension"
+          },
+          "minItems": 1,
+          "title": "Dimensions",
+          "type": "array"
+        },
+        "pass_score": {
+          "description": "Normalised score (0..1, mean over dimensions) to pass.",
+          "exclusiveMinimum": 0.0,
+          "maximum": 1.0,
+          "title": "Pass Score",
+          "type": "number"
+        },
+        "min_confidence": {
+          "default": 0.5,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Min Confidence",
+          "type": "number"
+        },
+        "guidance": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Extra notes for the judge.",
+          "title": "Guidance"
+        }
+      },
+      "required": [
+        "id",
+        "description",
+        "type",
+        "dimensions",
+        "pass_score"
+      ],
+      "title": "RubricCriterion",
+      "type": "object"
+    },
+    "RubricDimension": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "levels": {
+          "items": {
+            "$ref": "#/$defs/RubricLevel"
+          },
+          "minItems": 2,
+          "title": "Levels",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "description",
+        "levels"
+      ],
+      "title": "RubricDimension",
+      "type": "object"
+    },
+    "RubricLevel": {
+      "additionalProperties": false,
+      "properties": {
+        "score": {
+          "minimum": 0,
+          "title": "Score",
+          "type": "integer"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        }
+      },
+      "required": [
+        "score",
+        "description"
+      ],
+      "title": "RubricLevel",
       "type": "object"
     },
     "Scenario": {
@@ -1088,6 +1808,62 @@
       "title": "SourceDocument",
       "type": "object"
     },
+    "StructuredOutputCriterion": {
+      "additionalProperties": false,
+      "description": "The answer contains JSON that is valid against ``json_schema`` (Draft 2020-12).",
+      "properties": {
+        "id": {
+          "description": "Identifier unique within its expectation.",
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "weight": {
+          "default": 1.0,
+          "description": "Relative weight in the score.",
+          "exclusiveMinimum": 0.0,
+          "title": "Weight",
+          "type": "number"
+        },
+        "required": {
+          "default": false,
+          "description": "If true, the run fails when this criterion fails.",
+          "title": "Required",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "structured_output",
+          "title": "Type",
+          "type": "string"
+        },
+        "json_schema": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Json Schema",
+          "type": "object"
+        },
+        "answer_format": {
+          "$ref": "#/$defs/AnswerFormat",
+          "default": "whole"
+        }
+      },
+      "required": [
+        "id",
+        "description",
+        "type",
+        "json_schema"
+      ],
+      "title": "StructuredOutputCriterion",
+      "type": "object"
+    },
     "TaskInputs": {
       "additionalProperties": false,
       "properties": {
@@ -1146,6 +1922,46 @@
         "prompt"
       ],
       "title": "TaskInputs",
+      "type": "object"
+    },
+    "TextMatcher": {
+      "additionalProperties": false,
+      "description": "Matches when any phrase (case-insensitive substring) or regex pattern\n(case-insensitive ``re.search``) occurs in the text.",
+      "properties": {
+        "id": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "phrases": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Phrases",
+          "type": "array"
+        },
+        "patterns": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Patterns",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "description"
+      ],
+      "title": "TextMatcher",
       "type": "object"
     },
     "ToolCallCountCriterion": {
@@ -1217,6 +2033,59 @@
         "tool_name"
       ],
       "title": "ToolCallCountCriterion",
+      "type": "object"
+    },
+    "ToolCallsRequiredCriterion": {
+      "additionalProperties": false,
+      "description": "Each listed call was made (with matching arguments, successfully if required).",
+      "properties": {
+        "id": {
+          "description": "Identifier unique within its expectation.",
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:[.\\-_][a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "weight": {
+          "default": 1.0,
+          "description": "Relative weight in the score.",
+          "exclusiveMinimum": 0.0,
+          "title": "Weight",
+          "type": "number"
+        },
+        "required": {
+          "default": false,
+          "description": "If true, the run fails when this criterion fails.",
+          "title": "Required",
+          "type": "boolean"
+        },
+        "type": {
+          "const": "tool_calls_required",
+          "title": "Type",
+          "type": "string"
+        },
+        "calls": {
+          "items": {
+            "$ref": "#/$defs/RequiredToolCall"
+          },
+          "minItems": 1,
+          "title": "Calls",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "description",
+        "type",
+        "calls"
+      ],
+      "title": "ToolCallsRequiredCriterion",
       "type": "object"
     },
     "ToolErrorFault": {
