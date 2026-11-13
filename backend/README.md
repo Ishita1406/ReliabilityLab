@@ -49,7 +49,7 @@ if present). See `src/app/config.py` and the root `.env.example`.
 | `APP_REQUIRE_POSTGRES` | unset                     | `1` makes unreachable-database tests fail |
 | `APP_JUDGE_PROVIDER` | `none`                      | `none`, `groq` (optional LLM judge)    |
 | `APP_GROQ_API_KEY` (or `GROQ_API_KEY`) | unset   | Groq API key; required when the provider is `groq` |
-| `APP_GROQ_MODEL`   | `llama-3.3-70b-versatile`     | any Groq chat model that supports JSON mode |
+| `APP_GROQ_MODEL`   | `openai/gpt-oss-120b`     | any Groq chat model that supports JSON mode |
 | `APP_GROQ_BASE_URL` | `https://api.groq.com/openai/v1` | OpenAI-compatible base URL      |
 | `APP_JUDGE_TIMEOUT_SECONDS` | `30`                 | > 0                                    |
 | `APP_JUDGE_SAMPLES` | `1`                          | 1–5 independent judge calls per rubric criterion |

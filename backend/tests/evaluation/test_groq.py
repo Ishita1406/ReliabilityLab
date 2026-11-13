@@ -20,9 +20,7 @@ KEY = "gsk_test_not_a_real_key_0123456789"
 
 
 def client_with(handler: httpx.MockTransport) -> GroqJudgeClient:
-    return GroqJudgeClient(
-        api_key=SecretStr(KEY), model="openai/gpt-oss-120b", transport=handler
-    )
+    return GroqJudgeClient(api_key=SecretStr(KEY), model="openai/gpt-oss-120b", transport=handler)
 
 
 def reply(content: object, finish_reason: str = "stop", status: int = 200) -> httpx.Response:
