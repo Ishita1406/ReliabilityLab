@@ -13,7 +13,12 @@ test("review workflow: experiment → failed case → trace → review → corre
     .getByRole("navigation", { name: "Main" })
     .getByRole("link", { name: "Experiments" })
     .click();
-  await page.getByRole("link", { name: "[demo] baseline (0.1.0)" }).click();
+  // Scoped to the table: Next keeps the previous page (the overview, which links the same
+  // experiment) mounted but hidden after client navigation, so an unscoped locator can pick it.
+  await page
+    .getByRole("table", { name: "Experiments", exact: true })
+    .getByRole("link", { name: "[demo] baseline (0.1.0)" })
+    .click();
   await expect(page.getByText("12 of 12 runs stored · 12 evaluated")).toBeVisible();
 
   const failed = page.getByRole("table", { name: "Failed and unresolved cases" });

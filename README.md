@@ -64,7 +64,7 @@ git-ignored.
 | `APP_TRACE_RETENTION_DAYS` | backend | `30`                | trace retention window (days)               |
 | `APP_JUDGE_PROVIDER` | backend | `none`                    | `groq` enables the optional LLM judge       |
 | `APP_GROQ_API_KEY` | backend  | unset                        | Groq key (`GROQ_API_KEY` also accepted)     |
-| `APP_GROQ_MODEL`   | backend  | `llama-3.3-70b-versatile`    | Groq model used by the judge                |
+| `APP_GROQ_MODEL`   | backend  | `openai/gpt-oss-120b`    | Groq model used by the judge                |
 
 ## API
 

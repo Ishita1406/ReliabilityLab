@@ -39,7 +39,7 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("APP_GROQ_API_KEY", "GROQ_API_KEY"),
         description="Groq API key; read from APP_GROQ_API_KEY or GROQ_API_KEY.",
     )
-    groq_model: str = Field(default="llama-3.3-70b-versatile", min_length=1)
+    groq_model: str = Field(default="openai/gpt-oss-120b", min_length=1)
     groq_base_url: str = Field(default="https://api.groq.com/openai/v1", min_length=1)
     judge_timeout_seconds: float = Field(default=30.0, gt=0)
     judge_samples: int = Field(

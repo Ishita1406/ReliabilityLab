@@ -50,7 +50,7 @@ class JudgeUnavailableError(Exception):
 class JudgeClient(Protocol):
     @property
     def model_id(self) -> str:
-        """Provider and model, e.g. ``groq/llama-3.3-70b-versatile``."""
+        """Provider and model, e.g. ``groq/openai/gpt-oss-120b``."""
         ...
 
     def complete_json(self, system: str, user: str) -> str:

@@ -21,7 +21,7 @@ KEY = "gsk_test_not_a_real_key_0123456789"
 
 def client_with(handler: httpx.MockTransport) -> GroqJudgeClient:
     return GroqJudgeClient(
-        api_key=SecretStr(KEY), model="llama-3.3-70b-versatile", transport=handler
+        api_key=SecretStr(KEY), model="openai/gpt-oss-120b", transport=handler
     )
 
 
@@ -41,13 +41,13 @@ def test_request_uses_json_mode_and_returns_the_reply_text() -> None:
 
     client = client_with(httpx.MockTransport(handler))
     assert client.complete_json("system text", "user text") == '{"ok": true}'
-    assert client.model_id == "groq/llama-3.3-70b-versatile"
+    assert client.model_id == "groq/openai/gpt-oss-120b"
 
     [request] = seen
     assert str(request.url) == "https://api.groq.com/openai/v1/chat/completions"
     assert request.headers["authorization"] == f"Bearer {KEY}"
     body = json.loads(request.content)
-    assert body["model"] == "llama-3.3-70b-versatile"
+    assert body["model"] == "openai/gpt-oss-120b"
     assert body["response_format"] == {"type": "json_object"}
     assert body["temperature"] == 0
     assert body["messages"] == [
